@@ -1,0 +1,69 @@
+name: Weekly Blog Automation
+
+on:
+  schedule:
+    # 매주 일요일 06:00 UTC (= 토요일 23:00 PDT, 일요일 새벽)
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: '시작 날짜 YYYY-MM-DD (비우면 내일)'
+        required: false
+      days:
+        description: '며칠치 (기본 7)'
+        required: false
+        default: '7'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pynacl
+
+      - name: Create api-keys.txt from secrets
+        run: |
+          cat > api-keys.txt <<'EOF'
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL=${{ secrets.ANTHROPIC_MODEL }}
+          ANTHROPIC_REVIEW_MODEL=${{ secrets.ANTHROPIC_REVIEW_MODEL }}
+          GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+          IMAGEN_MODEL=${{ secrets.IMAGEN_MODEL }}
+          SHOPIFY_STORE_URL=${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
+          PUBLISH_MODE=${{ secrets.PUBLISH_MODE }}
+          IMAGE_VARIANTS_PER_SLOT=${{ secrets.IMAGE_VARIANTS_PER_SLOT }}
+          EOF
+
+      - name: Verify API keys
+        run: python src/verify_keys.py
+
+      - name: Run weekly batch
+        run: |
+          if [ -n "${{ github.event.inputs.start_date }}" ]; then
+            python src/weekly.py --start "${{ github.event.inputs.start_date }}" --days "${{ github.event.inputs.days }}"
+          else
+            python src/weekly.py --days 7
+          fi
+
+      - name: Upload weekly report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-report-${{ github.run_id }}
+          path: |
+            output/weekly-batch-*.json
+            output/*-article.json
+          retention-days: 30
