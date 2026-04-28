@@ -7,11 +7,46 @@ from utils import log
 MAX_DIM = 1600
 WEBP_QUALITY = 82
 
+# Person/people-related words that trigger Imagen safety filter (returns empty predictions
+# because of personGeneration: dont_allow). Replace with neutral object-focused phrasing.
+PERSON_PATTERNS = [
+    (r"\b(mom|mother|mother's|mommy|mum)\b", "tea gift"),
+    (r"\b(dad|father|father's|daddy)\b", "tea gift"),
+    (r"\b(woman|women|lady|ladies|girl|girls)\b", ""),
+    (r"\b(man|men|guy|guys|boy|boys)\b", ""),
+    (r"\b(person|people|someone|family|child|children|kid|kids|baby|babies)\b", ""),
+    (r"\b(hand|hands|fingers|finger|arm|arms)\b", ""),
+    (r"\b(ritual|enjoying|sipping|drinking|holding|pouring)\b", "still life of"),
+    (r"\b(her|his|their|she|he|they)\b", "the"),
+    (r"\bmorning routine\b", "morning still life"),
+    (r"\bself-care\b", "tea setup"),
+]
+
+
+def sanitize_image_prompt(prompt):
+    """Remove person references from prompt to avoid Imagen safety filter.
+    Returns sanitized prompt; logs if changes were made."""
+    original = prompt
+    out = prompt
+    for pat, repl in PERSON_PATTERNS:
+        out = re.sub(pat, repl, out, flags=re.IGNORECASE)
+    # collapse double spaces and stray punctuation
+    out = re.sub(r"\s+", " ", out).strip()
+    out = re.sub(r"\s*,\s*,+", ",", out)
+    if out != original:
+        log("  프롬프트 정화: 사람 관련 단어 제거됨")
+    return out
+
 
 def _clean_filename(name):
     name = re.sub(r"\.(jpg|jpeg|png|webp|gif|bmp)$", "", name, flags=re.IGNORECASE)
     name = re.sub(r"[^a-z0-9-]+", "-", name.lower())
     return name.strip("-")
+
+
+class ImagenSafetyBlocked(RuntimeError):
+    """Imagen returned empty predictions - prompt likely blocked by safety filter."""
+    pass
 
 
 def generate_imagen(prompt, *, api_key, model="imagen-4.0-generate-001",
@@ -36,7 +71,12 @@ def generate_imagen(prompt, *, api_key, model="imagen-4.0-generate-001",
                     out.append(base64.b64decode(b64))
             if out:
                 return out
-            last_err = "empty predictions"
+            # empty predictions = safety filter block; retrying same prompt won't help
+            raise ImagenSafetyBlocked(
+                "empty predictions (safety filter blocked - prompt likely contains person/sensitive content)"
+            )
+        except ImagenSafetyBlocked:
+            raise
         except urllib.error.HTTPError as e:
             body_text = e.read().decode("utf-8", errors="ignore")[:300]
             last_err = f"HTTP {e.code}: {body_text}"
@@ -118,20 +158,52 @@ def verify_image_matches_prompt(image_bytes, prompt, *, anthropic_key,
         return True, "parse_failed_pass"
 
 
+def _fallback_prompt(filename_base):
+    """If safety filter blocks even the sanitized prompt, build a generic
+    object-only fallback from the filename (which is purely descriptive)."""
+    keywords = re.sub(r"[-_]+", " ", _clean_filename(filename_base))
+    return (
+        f"Editorial still life photograph: {keywords}. "
+        "No people, no human figures, no body parts. "
+        "Soft natural daylight, cream linen background, "
+        "shallow depth of field, magazine-quality composition, "
+        "warm earthy tones."
+    )
+
+
 def generate_image_for_slot(*, prompt, filename_base, api_key, model,
                               variants=1, aspect_ratio="16:9",
                               anthropic_key=None, max_vision_retries=2):
-    """이미지 생성 + 비전 검증 + 불일치 시 자동 재생성."""
+    """이미지 생성 + 프롬프트 정화 + 비전 검증 + 불일치 시 자동 재생성."""
     clean_name = _clean_filename(filename_base)
     log(f"  이미지 생성 ({variants}장): {clean_name}")
 
+    # Step 1: sanitize prompt to remove person references (Imagen safety filter)
+    safe_prompt = sanitize_image_prompt(prompt)
+
     last_webp = None
     last_png = None
-    for vision_try in range(max_vision_retries + 1):
-        pngs = generate_imagen(prompt, api_key=api_key, model=model,
+    pngs = []
+
+    def _try_generate(p):
+        return generate_imagen(p, api_key=api_key, model=model,
                                 n=variants, aspect_ratio=aspect_ratio)
+
+    for vision_try in range(max_vision_retries + 1):
+        try:
+            pngs = _try_generate(safe_prompt)
+        except ImagenSafetyBlocked as e:
+            log(f"  ⚠️ 안전 필터 차단됨 ({e}) — 폴백 프롬프트로 재시도", "WARN")
+            fb = _fallback_prompt(filename_base)
+            log(f"  폴백 프롬프트: {fb[:100]}...")
+            try:
+                pngs = _try_generate(fb)
+            except ImagenSafetyBlocked:
+                raise RuntimeError(
+                    f"Imagen 안전 필터: 정화 프롬프트와 폴백 모두 차단됨 ({clean_name})"
+                )
         if not pngs:
-            raise RuntimeError(f"이미지 생성 실패: {prompt[:60]}")
+            raise RuntimeError(f"이미지 생성 실패: {safe_prompt[:60]}")
         best = max(pngs, key=len)
         webp = optimize_to_webp(best)
         last_webp = webp
@@ -145,7 +217,7 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
         # 비전 검증
         log(f"  비전 검증 시도 {vision_try+1}/{max_vision_retries+1}")
         matches, reason = verify_image_matches_prompt(
-            webp, prompt, anthropic_key=anthropic_key)
+            webp, safe_prompt, anthropic_key=anthropic_key)
         if matches:
             log(f"  ✅ 비전 검증 통과: {reason}")
             log(f"  최적화: {len(best):,}B → {len(webp):,}B ({len(webp)/len(best)*100:.0f}%)")
