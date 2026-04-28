@@ -1,0 +1,15 @@
+# Secrets
+api-keys.txt
+.env
+
+# Python
+__pycache__/
+*.pyc
+.deps_installed
+
+# Output (큰 파일)
+output/*.webp
+output/*.html
+
+# Local
+*.bak
