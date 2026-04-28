@@ -132,13 +132,22 @@ def generate_draft(*, topic, date, post_type, subtype, cta, hub_links=None, env=
     full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION
     user_msg = _build_user_prompt(date=date, topic=topic, post_type=post_type,
                                    subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=None)
-    log("[Pass 1] draft start (model=" + env["ANTHROPIC_MODEL"] + ")")
-    raw = _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
-                      system=full_system, messages=[{"role": "user", "content": user_msg}],
-                      max_tokens=12000, temperature=0.7)
-    draft = _extract_json(raw)
-    log("[Pass 1] draft done - " + draft.get("title", "?")[:60])
-    return draft
+    last_err = None
+    for attempt in range(1, 4):
+        log("[Pass 1] draft attempt " + str(attempt) + "/3 (model=" + env["ANTHROPIC_MODEL"] + ")")
+        try:
+            raw = _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
+                              system=full_system, messages=[{"role": "user", "content": user_msg}],
+                              max_tokens=12000, temperature=0.7)
+            draft = _extract_json(raw)
+            log("[Pass 1] draft done - " + draft.get("title", "?")[:60])
+            return draft
+        except (ValueError, Exception) as e:
+            last_err = e
+            log("[Pass 1] JSON parse failed: " + str(e)[:120], "WARN")
+            if attempt < 3:
+                log("[Pass 1] retrying...", "WARN")
+    raise RuntimeError("draft 3회 시도 모두 실패: " + str(last_err))
 
 
 CRITIQUE_SYSTEM = """You are a senior tea-blog editor reviewing a Steep Society draft. Find weaknesses ruthlessly. Quality target: 10/10.
