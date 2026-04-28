@@ -1,0 +1,186 @@
+# CTA 컬렉션 매핑 (실제 Shopify에서 검증된 60개)
+# 형식: key: { handle, title, url }
+# - schedule.yaml의 cta_collection 값이 여기 key와 매칭됨
+# - title은 CTA 버튼 표시명 (실재 컬렉션 제목의 짧은 버전)
+# - url은 자동으로 https://steep-society.com/collections/<handle>로 사용
+
+# 자주 쓰는 CTA 컬렉션
+tea_gift_sets_samplers:
+  handle: tea-gift-sets-samplers
+  title: "Tea Gift Sets & Samplers"
+  url: "https://steep-society.com/collections/tea-gift-sets-samplers"
+
+tea_samplers_variety_packs:
+  handle: tea-samplers-variety-packs
+  title: "Tea Samplers & Variety Packs"
+  url: "https://steep-society.com/collections/tea-samplers-variety-packs"
+
+tea_storage_canisters:
+  handle: tea-storage-canisters
+  title: "Tea Storage & Canisters"
+  url: "https://steep-society.com/collections/tea-storage-canisters"
+
+iced_tea_blends:
+  handle: iced-tea-blends
+  title: "Iced Tea Blends"
+  url: "https://steep-society.com/collections/iced-tea-blends"
+
+cold_brew_tea:
+  handle: cold-brew-tea
+  title: "Cold Brew Tea"
+  url: "https://steep-society.com/collections/cold-brew-tea"
+
+mixed_herbal_blends:
+  handle: mixed-herbal-blends
+  title: "Mixed Herbal Blends"
+  url: "https://steep-society.com/collections/mixed-herbal-blends"
+
+fruity_tropical_tea:
+  handle: fruit-tropical-tea-blends
+  title: "Fruit & Tropical Tea"
+  url: "https://steep-society.com/collections/fruit-tropical-tea-blends"
+
+floral_infusions:
+  handle: floral-infusions-tea
+  title: "Floral Infusions Tea"
+  url: "https://steep-society.com/collections/floral-infusions-tea"
+
+minty_cooling:
+  handle: minty-cooling-tea
+  title: "Minty & Cooling Tea"
+  url: "https://steep-society.com/collections/minty-cooling-tea"
+
+citrus_lemon:
+  handle: citrus-lemon-tea
+  title: "Citrus & Lemon Tea"
+  url: "https://steep-society.com/collections/citrus-lemon-tea"
+
+# Tea types
+black_tea:
+  handle: black-tea
+  title: "Black Tea"
+  url: "https://steep-society.com/collections/black-tea"
+green_tea:
+  handle: green-tea
+  title: "Green Tea"
+  url: "https://steep-society.com/collections/green-tea"
+white_tea:
+  handle: white-tea
+  title: "White Tea"
+  url: "https://steep-society.com/collections/white-tea"
+oolong_tea:
+  handle: oolong-tea
+  title: "Oolong Tea"
+  url: "https://steep-society.com/collections/oolong-tea"
+matcha:
+  handle: matcha
+  title: "Matcha"
+  url: "https://steep-society.com/collections/matcha"
+chai:
+  handle: chai
+  title: "Chai"
+  url: "https://steep-society.com/collections/chai"
+herbal_botanical:
+  handle: herbal-botanical-tea
+  title: "Herbal & Botanical"
+  url: "https://steep-society.com/collections/herbal-botanical-tea"
+spiced_teas:
+  handle: spiced-teas
+  title: "Spiced Teas"
+  url: "https://steep-society.com/collections/spiced-teas"
+rooibos_tea:
+  handle: rooibos-tea
+  title: "Rooibos Tea"
+  url: "https://steep-society.com/collections/rooibos-tea"
+chamomile_tea:
+  handle: chamomile-tea
+  title: "Chamomile Tea"
+  url: "https://steep-society.com/collections/chamomile-tea"
+peppermint_tea:
+  handle: peppermint-tea
+  title: "Peppermint Tea"
+  url: "https://steep-society.com/collections/peppermint-tea"
+ginger_tea:
+  handle: ginger-tea
+  title: "Ginger Tea"
+  url: "https://steep-society.com/collections/ginger-tea"
+
+# Functional / wellness
+sleep_relaxation:
+  handle: sleep-relaxation-tea
+  title: "Sleep & Relaxation"
+  url: "https://steep-society.com/collections/sleep-relaxation-tea"
+focus_energy:
+  handle: focus-energy-tea
+  title: "Focus & Energy Tea"
+  url: "https://steep-society.com/collections/focus-energy-tea"
+digestive_health:
+  handle: digestive-health-tea
+  title: "Digestive Health Tea"
+  url: "https://steep-society.com/collections/digestive-health-tea"
+detox_cleanse:
+  handle: detox-cleanse-tea
+  title: "Detox & Cleanse Tea"
+  url: "https://steep-society.com/collections/detox-cleanse-tea"
+daily_comfort:
+  handle: daily-comfort-tea
+  title: "Daily Comfort Tea"
+  url: "https://steep-society.com/collections/daily-comfort-tea"
+functional_wellness:
+  handle: functional-wellness-tea
+  title: "Functional Wellness Tea"
+  url: "https://steep-society.com/collections/functional-wellness-tea"
+organic_caffeine_free:
+  handle: organic-caffeine-free-tea
+  title: "Organic & Caffeine-Free Tea"
+  url: "https://steep-society.com/collections/organic-caffeine-free-tea"
+
+# Lifestyle / accessories
+lifestyle_gifting:
+  handle: lifestyle-gifting-collections
+  title: "Lifestyle & Gifting"
+  url: "https://steep-society.com/collections/lifestyle-gifting-collections"
+tea_accessories:
+  handle: tea-accessories-ritual-tools
+  title: "Tea Accessories & Ritual Tools"
+  url: "https://steep-society.com/collections/tea-accessories-ritual-tools"
+infusers_strainers:
+  handle: infusers-strainers
+  title: "Infusers & Strainers"
+  url: "https://steep-society.com/collections/infusers-strainers"
+teapots_kettles:
+  handle: teapots-kettles
+  title: "Teapots & Kettles"
+  url: "https://steep-society.com/collections/teapots-kettles"
+matcha_essentials:
+  handle: matcha-essentials-tools
+  title: "Matcha Essentials"
+  url: "https://steep-society.com/collections/matcha-essentials-tools"
+seasonal_limited:
+  handle: seasonal-limited-edition-tea
+  title: "Seasonal & Limited Edition"
+  url: "https://steep-society.com/collections/seasonal-limited-edition-tea"
+brewing_styles:
+  handle: brewing-styles-experience
+  title: "Brewing Styles & Experience"
+  url: "https://steep-society.com/collections/brewing-styles-experience"
+flavor_aroma:
+  handle: flavor-aroma-profiles
+  title: "Flavor & Aroma Profiles"
+  url: "https://steep-society.com/collections/flavor-aroma-profiles"
+instant_on_the_go:
+  handle: instant-and-on-the-go-teas
+  title: "Instant & On-the-Go Teas"
+  url: "https://steep-society.com/collections/instant-and-on-the-go-teas"
+sweet_dessert:
+  handle: sweet-dessert-teas
+  title: "Sweet & Dessert Teas"
+  url: "https://steep-society.com/collections/sweet-dessert-teas"
+latte_friendly:
+  handle: latte-friendly-teas
+  title: "Latte-Friendly Teas"
+  url: "https://steep-society.com/collections/latte-friendly-teas"
+milk_tea:
+  handle: milk-tea-blends
+  title: "Milk Tea Blends"
+  url: "https://steep-society.com/collections/milk-tea-blends"
