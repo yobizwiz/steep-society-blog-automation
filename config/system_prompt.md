@@ -74,6 +74,22 @@
 - prompt / filename / alt 직접 완성.
 - Featured는 Shopify 대표만. 본문 삽입 X.
 
+### 10a. 이미지 프롬프트 절대 규칙 (Imagen 안전 필터 회피)
+
+이미지 프롬프트와 filename은 **무조건 사물/풍경/공간 중심**으로 작성한다. 사람을 직접/간접적으로 암시하는 어떤 단어도 들어가면 Imagen이 빈 응답(empty predictions)을 돌려줘서 자동화가 멈춘다. 다음을 절대 사용하지 말 것:
+
+- 사람 명사: mom, mother, dad, father, woman, man, person, people, family, child, kid, baby, lady, girl, boy, hand(s), finger(s), arm(s), face
+- 사람 동작: enjoying, sipping, drinking, holding, pouring, ritual, routine, self-care, hands wrapped around, morning routine
+- 인칭 대명사: she, he, her, his, they, their, someone
+
+대신 다음 패턴을 쓴다:
+- "Editorial still life of [tea product] on [surface] with [props]" 형태
+- "Flat-lay overhead view of ..." / "Three-quarter angle product shot of ..."
+- 묘사 대상은 항상 차/스콘/게이트/꽃/리본/나무 트레이/리넨 천/대리석 같은 **사물**
+- filename도 동일 — `mom-morning-ritual` ❌ → `tea-gift-set-marble-tray` ✅
+
+이 규칙을 어기면 자동화 전체가 그날 글에 대해 실패한다.
+
 ## 11. 출력 JSON 스키마
 
 ```json
