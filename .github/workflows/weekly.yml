@@ -67,3 +67,28 @@ jobs:
             output/weekly-batch-*.json
             output/*-article.json
           retention-days: 30
+
+      - name: Verify all days succeeded
+        if: always()
+        run: |
+          python <<'PY'
+          import glob, json, sys
+          files = sorted(glob.glob("output/weekly-batch-*.json"))
+          if not files:
+              print("::error::No weekly-batch report found")
+              sys.exit(1)
+          report = json.loads(open(files[-1], encoding="utf-8").read())
+          summaries = report.get("summaries", [])
+          failed = [s for s in summaries if s.get("status") == "failed"]
+          skipped = [s for s in summaries if s.get("status") == "skipped"]
+          success = [s for s in summaries if s.get("status") == "success"]
+          print(f"Days: {len(summaries)} | success={len(success)} failed={len(failed)} skipped={len(skipped)}")
+          for s in failed:
+              print(f"::error::{s.get('date')} FAILED — {s.get('error','')[:200]}")
+          for s in skipped:
+              print(f"::warning::{s.get('date')} SKIPPED — {s.get('error','')}")
+          if failed:
+              print("::error::One or more days failed — workflow marked as failure")
+              sys.exit(1)
+          print("All days succeeded.")
+          PY
