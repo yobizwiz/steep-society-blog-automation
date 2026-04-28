@@ -165,13 +165,32 @@ Output JSON:
 Be specific. Cite phrases. Only list issues."""
 
 
+def _call_and_parse_with_retry(*, label, max_attempts, call_fn):
+    """Run call_fn (which returns raw text), parse JSON, retry on parse failure.
+    label: prefix for logs (e.g. '[Pass 2]')
+    call_fn: callable -> raw string
+    """
+    last_err = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            raw = call_fn()
+            return _extract_json(raw)
+        except Exception as e:
+            last_err = e
+            log(label + " JSON parse failed: " + str(e)[:120], "WARN")
+            if attempt < max_attempts:
+                log(label + " retrying...", "WARN")
+    raise RuntimeError(label + " " + str(max_attempts) + "회 시도 모두 실패: " + str(last_err))
+
+
 def self_critique(draft, env):
     log("[Pass 2] self-critique")
     user_msg = "Review this draft article JSON:\n\n```json\n" + json.dumps(draft, ensure_ascii=False, indent=2) + "\n```"
-    raw = _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
-                      system=CRITIQUE_SYSTEM, messages=[{"role": "user", "content": user_msg}],
-                      max_tokens=4000, temperature=0.3)
-    crit = _extract_json(raw)
+    def _call():
+        return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
+                          system=CRITIQUE_SYSTEM, messages=[{"role": "user", "content": user_msg}],
+                          max_tokens=4000, temperature=0.3)
+    crit = _call_and_parse_with_retry(label="[Pass 2]", max_attempts=3, call_fn=_call)
     n = sum(len(crit.get(k, [])) for k in ("content_weaknesses", "seo_weaknesses", "conversion_weaknesses", "structure_violations"))
     log("[Pass 2] critique done - " + str(n) + " issues")
     return crit
@@ -188,10 +207,11 @@ def revise(draft, critique, env, *, original_user_prompt):
         "## EDITOR CRITIQUE\n\n```json\n" + json.dumps(critique, ensure_ascii=False, indent=2) + "\n```\n\n"
         "Now produce REVISED article JSON. Address every weakness."
     )
-    raw = _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
-                      system=full_system, messages=[{"role": "user", "content": user_msg}],
-                      max_tokens=12000, temperature=0.5)
-    out = _extract_json(raw)
+    def _call():
+        return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
+                          system=full_system, messages=[{"role": "user", "content": user_msg}],
+                          max_tokens=12000, temperature=0.5)
+    out = _call_and_parse_with_retry(label="[Pass 3]", max_attempts=3, call_fn=_call)
     log("[Pass 3] revise done")
     return out
 
@@ -204,10 +224,11 @@ def cross_review(revised, env):
     suffix = "\n\n## CROSS-MODEL FINAL POLISH\nFinal polish. Tighten weak sentences, fix subtle SEO, verify all hard rules. Return SAME JSON schema."
     full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + suffix
     user_msg = "Polish this revised draft:\n\n```json\n" + json.dumps(revised, ensure_ascii=False, indent=2) + "\n```"
-    raw = _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=review_model,
-                      system=full_system, messages=[{"role": "user", "content": user_msg}],
-                      max_tokens=12000, temperature=0.4)
-    out = _extract_json(raw)
+    def _call():
+        return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=review_model,
+                          system=full_system, messages=[{"role": "user", "content": user_msg}],
+                          max_tokens=12000, temperature=0.4)
+    out = _call_and_parse_with_retry(label="[Pass 4]", max_attempts=3, call_fn=_call)
     log("[Pass 4] cross-review done")
     return out
 
