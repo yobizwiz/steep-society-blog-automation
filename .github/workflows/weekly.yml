@@ -68,6 +68,15 @@ jobs:
             output/*-article.json
           retention-days: 30
 
+      - name: Send result email
+        if: always()
+        continue-on-error: true
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python src/send_email.py
+
       - name: Verify all days succeeded
         if: always()
         run: |
