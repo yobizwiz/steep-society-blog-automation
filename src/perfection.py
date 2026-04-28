@@ -35,7 +35,7 @@ PERFECTION_SYS = (
 
 
 def perfection_pass(article, env):
-    from content import _build_few_shot_block, _claude_call, _extract_json, OUTPUT_SCHEMA_INSTRUCTION
+    from content import _build_few_shot_block, _claude_call, _extract_json, OUTPUT_SCHEMA_INSTRUCTION, _call_and_parse_with_retry
     log("[Pass 5] perfection (10/10 push)")
     sys_prompt = load_system_prompt()
     few_shot = _build_few_shot_block(load_few_shot_articles())
@@ -45,14 +45,15 @@ def perfection_pass(article, env):
         "```json\n" + json.dumps(article, ensure_ascii=False, indent=2) + "\n```"
     )
     review_model = env.get("ANTHROPIC_REVIEW_MODEL", env["ANTHROPIC_MODEL"])
-    raw = _claude_call(
-        api_key=env["ANTHROPIC_API_KEY"],
-        model=review_model,
-        system=full_system,
-        messages=[{"role": "user", "content": user_msg}],
-        max_tokens=12000,
-        temperature=0.3,
-    )
-    out = _extract_json(raw)
+    def _call():
+        return _claude_call(
+            api_key=env["ANTHROPIC_API_KEY"],
+            model=review_model,
+            system=full_system,
+            messages=[{"role": "user", "content": user_msg}],
+            max_tokens=12000,
+            temperature=0.3,
+        )
+    out = _call_and_parse_with_retry(label="[Pass 5]", max_attempts=3, call_fn=_call)
     log("[Pass 5] done - min: " + str(min_score(out)) + "/10")
     return out
