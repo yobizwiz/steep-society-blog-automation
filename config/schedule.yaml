@@ -1,0 +1,152 @@
+# Steep Society 블로그 발행 스케줄 (2026-02-11 ~ 2026-12-31)
+# 형식: YYYY-MM-DD: { title, type, hub, cta_collection }
+# type: hub | longtail | quickfix | comparison | pairing
+# hub: 이 글이 연결되는 허브 글의 날짜 (해당 시)
+# cta_collection: 해당 글에 사용할 CTA 컬렉션 핸들 (collections.yaml의 키)
+
+# === 2026년 4월 ===
+# === 2026년 4월 28-29 (복구 필요) ===
+"2026-04-28":
+  title: "Tea Sampler vs Full Box: What to Buy First"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-04-29":
+  title: "Easy Spring Tea Pairings for Fruit and Pastries"
+  type: pairing
+  cta_collection: fruity_tropical_tea
+
+"2026-04-30":
+  title: "How to Refresh Your Tea Shelf for Spring"
+  type: longtail
+  subtype: seasonal_refresh_guide
+  hub: "2026-04-25"
+  cta_collection: tea_storage_canisters
+
+# === 2026년 5월 — Mother's Day, Spring-to-Summer, Hosting ===
+"2026-05-01":
+  title: "Best Tea Gifts for Mother's Day"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-02":
+  title: "Mother's Day Tea Gift Guide"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-03":
+  title: "Floral Tea Gift Ideas"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-04":
+  title: "Best Caffeine-Free Tea Gifts"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-05":
+  title: "Mother's Day Tea Gift Hub"
+  type: hub
+  cta_collection: tea_gift_sets_samplers
+"2026-05-06":
+  title: "Best Tea for Spring Hosting"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-07":
+  title: "How to Serve Tea for Guests"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-08":
+  title: "Tea Gift Basket Ideas"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-09":
+  title: "Tea Sampler Gift Ideas"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-10":
+  title: "Last-Minute Tea Gifts for Mother's Day"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-11":
+  title: "Best Tea for Warm Afternoons"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-12":
+  title: "Herbal Iced Tea for May"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-13":
+  title: "Fruit Tea for Early Summer"
+  type: longtail
+  cta_collection: fruity_tropical_tea
+"2026-05-14":
+  title: "Iced Tea Flavor Pairing Guide"
+  type: pairing
+  cta_collection: iced_tea_blends
+"2026-05-15":
+  title: "Spring-to-Summer Iced Tea Hub"
+  type: hub
+  cta_collection: iced_tea_blends
+"2026-05-16":
+  title: "Tea for Outdoor Gatherings"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-17":
+  title: "Best Tea for Brunch Guests"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-18":
+  title: "Tea for Light Desserts"
+  type: pairing
+  cta_collection: fruity_tropical_tea
+"2026-05-19":
+  title: "How to Make Tea Feel More Giftable"
+  type: longtail
+  cta_collection: tea_gift_sets_samplers
+"2026-05-20":
+  title: "Tea Serving Mistakes to Avoid"
+  type: quickfix
+  cta_collection: tea_gift_sets_samplers
+"2026-05-21":
+  title: "Hosting Tea Hub"
+  type: hub
+  cta_collection: tea_gift_sets_samplers
+"2026-05-22":
+  title: "Best Tea for Memorial Day Weekend"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-23":
+  title: "Iced Tea for Cookouts and Picnics"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-24":
+  title: "Tea Pairings for BBQ Sides and Summer Snacks"
+  type: pairing
+  cta_collection: iced_tea_blends
+"2026-05-25":
+  title: "Memorial Day Iced Tea Ideas"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-26":
+  title: "Tea for Long Weekend Hosting"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-27":
+  title: "Summer Tea Prep Checklist"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-28":
+  title: "Best Tea for Road Trips"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-29":
+  title: "Warm Weather Tea Routine"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-30":
+  title: "May Tea Routine Wrap-Up"
+  type: longtail
+  cta_collection: iced_tea_blends
+"2026-05-31":
+  title: "Early Summer Tea Shelf Refresh"
+  type: longtail
+  cta_collection: tea_storage_canisters
+
+# 6월~12월 스케줄은 동일 형식으로 추가됨 (생략 - 운영 중 동일 구조로 확장 가능)
+# 운영 시 다음 분기 스케줄을 이 파일에 그대로 이어 붙여 확장
