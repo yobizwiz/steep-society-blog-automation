@@ -1,18 +1,7 @@
 #!/usr/bin/env python3
-"""Weekly batch runner — generate and schedule 7 articles in one go.
-
-Usage:
-  python src/weekly.py                    # 다음주 월~일 (오늘이 일요일이면 내일부터 7일)
-  python src/weekly.py --start 2026-05-04 # 2026-05-04부터 7일치
-  python src/weekly.py --days 5           # 7 대신 5일치
-"""
+"""Weekly batch runner."""
 from __future__ import annotations
-
-import argparse
-import datetime as _dt
-import json
-import sys
-import traceback
+import argparse, datetime as _dt, json, sys, traceback
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -25,14 +14,11 @@ from shopify_pub import (admin_url, create_article, get_blog_id,
                           insert_body_images, public_url, upload_image)
 
 
-def process_one_day(date: str, env: dict, sched: dict, cols: dict) -> dict:
-    """Run full pipeline for one date. Returns summary dict."""
+def process_one_day(date, env, sched, cols):
     log("=" * 60)
     log(f"=== Processing {date} ===")
     log("=" * 60)
-
     summary = {"date": date, "status": "pending", "error": None}
-
     if date not in sched:
         summary["status"] = "skipped"
         summary["error"] = f"No schedule entry for {date}"
@@ -45,7 +31,6 @@ def process_one_day(date: str, env: dict, sched: dict, cols: dict) -> dict:
     summary["type"] = entry.get("type", "longtail")
 
     try:
-        # Check if article already generated
         article_path = OUTPUT_DIR / f"{date}-article.json"
         if article_path.exists():
             log(f"Reusing existing {article_path.name}")
@@ -58,12 +43,10 @@ def process_one_day(date: str, env: dict, sched: dict, cols: dict) -> dict:
             )
             article_path.write_text(json.dumps(article, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        # Validate
         result = validate(article, post_type=entry.get("type", "longtail"))
         summary["validation"] = {"violations": len(result["violations"]), "warnings": len(result["warnings"])}
         summary["score"] = (article.get("internal_judgment") or {}).get("content_quality", {}).get("score")
 
-        # Generate images
         log(f"\n--- {date}: 이미지 생성 ---")
         google_key = env["GOOGLE_API_KEY"]
         imagen_model = env.get("IMAGEN_MODEL", "imagen-4.0-generate-001")
@@ -81,7 +64,6 @@ def process_one_day(date: str, env: dict, sched: dict, cols: dict) -> dict:
             (OUTPUT_DIR / f"{date}-{img['filename']}.webp").write_bytes(r["webp_bytes"])
             generated.append({**img, **r})
 
-        # Upload + publish
         log(f"\n--- {date}: Shopify 업로드 ---")
         blog_id = get_blog_id(env, env["SHOPIFY_BLOG_HANDLE"])
         featured = next(g for g in generated if g.get("role") == "featured")
@@ -95,8 +77,6 @@ def process_one_day(date: str, env: dict, sched: dict, cols: dict) -> dict:
             body_uploaded.append({"url": url, "alt": bi["alt"], "filename": bi["filename"]})
 
         body_with_imgs = insert_body_images(article["body_html"], body_uploaded)
-
-        # Schedule for that date 00:00 PDT = UTC 07:00
         scheduled_utc = f"{date}T07:00:00Z"
         created = create_article(
             env, blog_id=blog_id, article=article,
@@ -116,29 +96,28 @@ def process_one_day(date: str, env: dict, sched: dict, cols: dict) -> dict:
         summary["error"] = str(e)[:500]
         log(f"❌ {date}: FAILED — {e}", "ERROR")
         traceback.print_exc()
-
     return summary
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--start", help="Start date YYYY-MM-DD (default: tomorrow)")
-    ap.add_argument("--days", type=int, default=7, help="Number of days (default 7)")
+    ap.add_argument("--days", type=int, default=7)
     args = ap.parse_args()
 
     if args.start:
         start = _dt.date.fromisoformat(args.start)
     else:
-        start = _dt.date.today() + _dt.timedelta(days=1)  # tomorrow
+        start = _dt.date.today() + _dt.timedelta(days=1)
 
     ensure_dirs()
     env = load_env()
     sched = load_yaml(CONFIG_DIR / "schedule.yaml")
     cols = load_yaml(CONFIG_DIR / "collections.yaml")
 
-    log(f"\n{'#' * 64}")
+    log("\n" + "#" * 64)
     log(f"# WEEKLY BATCH — {start} 부터 {args.days}일치")
-    log(f"{'#' * 64}\n")
+    log("#" * 64 + "\n")
 
     summaries = []
     for i in range(args.days):
@@ -146,10 +125,9 @@ def main():
         s = process_one_day(d.isoformat(), env, sched, cols)
         summaries.append(s)
 
-    # Final report
-    log(f"\n{'=' * 64}")
-    log(f"# WEEKLY BATCH 완료")
-    log(f"{'=' * 64}")
+    log("\n" + "=" * 64)
+    log("# WEEKLY BATCH 완료")
+    log("=" * 64)
     success = [s for s in summaries if s["status"] == "success"]
     failed = [s for s in summaries if s["status"] == "failed"]
     skipped = [s for s in summaries if s["status"] == "skipped"]
@@ -161,9 +139,12 @@ def main():
         if s.get("error"): line += f" — ERROR: {s['error'][:80]}"
         log(line)
 
-    # Save report JSON
     today_str = _dt.date.today().isoformat()
     report_path = OUTPUT_DIR / f"weekly-batch-{today_str}.json"
-    report_path.write_text(json.dumps({"start": start.isoformat(), "days": args.days,
-                                         "summaries": summaries}, indent=2, ensure_ascii=False),
-                            enc
+    report_data = {"start": start.isoformat(), "days": args.days, "summaries": summaries}
+    report_path.write_text(json.dumps(report_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    log(f"\n리포트: {report_path}")
+
+
+if __name__ == "__main__":
+    main()
