@@ -2,8 +2,11 @@ name: Weekly Blog Automation
 
 on:
   schedule:
-    # 매주 일요일 06:00 UTC (= 토요일 23:00 PDT, 일요일 새벽)
+    # 매주 일요일 06:00 UTC (= 토요일 23:00 PDT) — 기본 주간 자동화
     - cron: '0 6 * * 0'
+    # 일회성: 2026-05-01 (금) 12:00 UTC = 뉴욕시간 5/1 08:00 AM EDT
+    # → 5/4 ~ 5/10 7일치 백필. 한 번 돌면 사용자가 이 cron 라인 제거 권장.
+    - cron: '0 12 1 5 *'
   workflow_dispatch:
     inputs:
       start_date:
@@ -52,9 +55,14 @@ jobs:
 
       - name: Run weekly batch
         run: |
-          if [ -n "${{ github.event.inputs.start_date }}" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.start_date }}" ]; then
+            echo "[trigger] manual workflow_dispatch with start_date=${{ github.event.inputs.start_date }}"
             python src/weekly.py --start "${{ github.event.inputs.start_date }}" --days "${{ github.event.inputs.days }}"
+          elif [ "${{ github.event.schedule }}" = "0 12 1 5 *" ]; then
+            echo "[trigger] one-shot May 1 cron — backfilling 2026-05-04 + 7 days"
+            python src/weekly.py --start "2026-05-04" --days 7
           else
+            echo "[trigger] default cron — tomorrow + 7 days"
             python src/weekly.py --days 7
           fi
 
