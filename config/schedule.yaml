@@ -150,3 +150,859 @@
 
 # 6월~12월 스케줄은 동일 형식으로 추가됨 (생략 - 운영 중 동일 구조로 확장 가능)
 # 운영 시 다음 분기 스케줄을 이 파일에 그대로 이어 붙여 확장
+"2026-06-01":
+  type: "longtail"
+  title: "Best Iced Tea Blends for Summer"
+  cta_collection: "iced_tea_blends"
+"2026-06-02":
+  type: "longtail"
+  title: "Cold Brew Tea Basics"
+  cta_collection: "cold_brew_tea"
+"2026-06-03":
+  type: "longtail"
+  title: "How to Make Tea Less Bitter When Iced"
+  cta_collection: "iced_tea_blends"
+"2026-06-04":
+  type: "hub"
+  title: "Summer Iced Tea Hub"
+  cta_collection: "iced_tea_blends"
+"2026-06-05":
+  type: "longtail"
+  title: "Best Herbal Tea for Hot Days"
+  cta_collection: "herbal_botanical"
+"2026-06-06":
+  type: "longtail"
+  title: "Citrus Iced Tea Ideas"
+  cta_collection: "iced_tea_blends"
+"2026-06-07":
+  type: "quickfix"
+  title: "Mint Iced Tea Quick Fix"
+  cta_collection: "iced_tea_blends"
+"2026-06-08":
+  type: "longtail"
+  title: "Cold Brew vs Hot Brew Iced Tea"
+  cta_collection: "cold_brew_tea"
+"2026-06-09":
+  type: "longtail"
+  title: "Best Tea for Beach Days"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-06-10":
+  type: "longtail"
+  title: "Tea for Poolside Sipping"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-06-11":
+  type: "longtail"
+  title: "Summer Tea Hydration Guide"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-06-12":
+  type: "longtail"
+  title: "Best Caffeine-Free Iced Tea"
+  cta_collection: "iced_tea_blends"
+"2026-06-13":
+  type: "pairing"
+  title: "Fruit Iced Tea Pairing Ideas"
+  cta_collection: "iced_tea_blends"
+"2026-06-14":
+  type: "longtail"
+  title: "How to Make Iced Tea for a Group"
+  cta_collection: "iced_tea_blends"
+"2026-06-15":
+  type: "hub"
+  title: "Summer Hosting Tea Hub"
+  cta_collection: "lifestyle_gifting"
+"2026-06-16":
+  type: "longtail"
+  title: "Best Tea for Father's Day Gifts"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-06-17":
+  type: "longtail"
+  title: "Tea Gift Ideas for Dad"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-06-18":
+  type: "longtail"
+  title: "Iced Tea Gift Sets"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-06-19":
+  type: "longtail"
+  title: "Tea Sampler Gifts for Summer"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-06-20":
+  type: "hub"
+  title: "Father's Day Tea Gift Hub"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-06-21":
+  type: "longtail"
+  title: "First Day of Summer Tea Routine"
+  cta_collection: "daily_comfort"
+"2026-06-22":
+  type: "longtail"
+  title: "Tea for Hot Afternoon Slumps"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-06-23":
+  type: "longtail"
+  title: "How to Store Tea in Summer Heat"
+  cta_collection: "tea_storage_canisters"
+"2026-06-24":
+  type: "quickfix"
+  title: "Summer Tea Storage Quick Fix"
+  cta_collection: "tea_storage_canisters"
+"2026-06-25":
+  type: "longtail"
+  title: "Best Tea for Travel Bottles"
+  cta_collection: "instant_on_the_go"
+"2026-06-26":
+  type: "longtail"
+  title: "Iced Tea for Workdays"
+  cta_collection: "iced_tea_blends"
+"2026-06-27":
+  type: "hub"
+  title: "Summer Tea Routine Hub"
+  cta_collection: "daily_comfort"
+"2026-06-28":
+  type: "longtail"
+  title: "Tea Shelf Audit for Summer"
+  cta_collection: "tea_storage_canisters"
+"2026-06-29":
+  type: "longtail"
+  title: "Best Tea for Light Summer Desserts"
+  cta_collection: "sweet_dessert"
+"2026-06-30":
+  type: "longtail"
+  title: "June Tea Routine Wrap-Up"
+  cta_collection: "daily_comfort"
+"2026-07-01":
+  type: "longtail"
+  title: "Best Tea for July 4th Weekend"
+  cta_collection: "lifestyle_gifting"
+"2026-07-02":
+  type: "longtail"
+  title: "Red, White, and Blue Iced Tea Ideas"
+  cta_collection: "iced_tea_blends"
+"2026-07-03":
+  type: "longtail"
+  title: "Tea for Summer Parties"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-07-04":
+  type: "hub"
+  title: "Fourth of July Iced Tea Hub"
+  cta_collection: "iced_tea_blends"
+"2026-07-05":
+  type: "quickfix"
+  title: "Iced Tea Too Watery? Quick Fix"
+  cta_collection: "iced_tea_blends"
+"2026-07-06":
+  type: "longtail"
+  title: "Best Tea for Summer Picnics"
+  cta_collection: "lifestyle_gifting"
+"2026-07-07":
+  type: "longtail"
+  title: "Tea for Backyard Gatherings"
+  cta_collection: "lifestyle_gifting"
+"2026-07-08":
+  type: "longtail"
+  title: "How to Batch Brew Iced Tea"
+  cta_collection: "iced_tea_blends"
+"2026-07-09":
+  type: "longtail"
+  title: "Best Tea for Summer Travel"
+  cta_collection: "instant_on_the_go"
+"2026-07-10":
+  type: "longtail"
+  title: "Road Trip Tea Kit"
+  cta_collection: "instant_on_the_go"
+"2026-07-11":
+  type: "hub"
+  title: "Summer Travel Tea Hub"
+  cta_collection: "instant_on_the_go"
+"2026-07-12":
+  type: "longtail"
+  title: "Best Caffeine-Free Tea for Hot Nights"
+  cta_collection: "organic_caffeine_free"
+"2026-07-13":
+  type: "longtail"
+  title: "Evening Iced Herbal Tea"
+  cta_collection: "iced_tea_blends"
+"2026-07-14":
+  type: "longtail"
+  title: "Mint vs Citrus Iced Tea"
+  cta_collection: "iced_tea_blends"
+"2026-07-15":
+  type: "longtail"
+  title: "Fruity vs Floral Iced Tea"
+  cta_collection: "iced_tea_blends"
+"2026-07-16":
+  type: "longtail"
+  title: "Summer Flavor Discovery Guide"
+  cta_collection: "flavor_aroma"
+"2026-07-17":
+  type: "longtail"
+  title: "Tea Samplers for Summer"
+  cta_collection: "tea_samplers_variety_packs"
+"2026-07-18":
+  type: "hub"
+  title: "Summer Tea Flavor Hub"
+  cta_collection: "flavor_aroma"
+"2026-07-19":
+  type: "longtail"
+  title: "How to Keep Iced Tea Fresh"
+  cta_collection: "iced_tea_blends"
+"2026-07-20":
+  type: "longtail"
+  title: "Iced Tea Storage Rules"
+  cta_collection: "iced_tea_blends"
+"2026-07-21":
+  type: "longtail"
+  title: "Tea for Humid Days"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-07-22":
+  type: "longtail"
+  title: "Tea for Outdoor Brunch"
+  cta_collection: "lifestyle_gifting"
+"2026-07-23":
+  type: "longtail"
+  title: "Best Tea With Summer Fruit"
+  cta_collection: "fruity_tropical_tea"
+"2026-07-24":
+  type: "longtail"
+  title: "Tea Pairings for Ice Cream and Desserts"
+  cta_collection: "sweet_dessert"
+"2026-07-25":
+  type: "hub"
+  title: "Summer Tea Pairing Hub"
+  cta_collection: "flavor_aroma"
+"2026-07-26":
+  type: "longtail"
+  title: "How to Refresh a Flat Iced Tea"
+  cta_collection: "iced_tea_blends"
+"2026-07-27":
+  type: "quickfix"
+  title: "Tea Too Tart? Quick Fix"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-07-28":
+  type: "longtail"
+  title: "Best Tea for Late Summer Energy"
+  cta_collection: "focus_energy"
+"2026-07-29":
+  type: "longtail"
+  title: "Summer Tea Shelf Reset"
+  cta_collection: "detox_cleanse"
+"2026-07-30":
+  type: "longtail"
+  title: "Summer Tea Routine Checklist"
+  cta_collection: "daily_comfort"
+"2026-07-31":
+  type: "longtail"
+  title: "July Tea Routine Wrap-Up"
+  cta_collection: "daily_comfort"
+"2026-08-01":
+  type: "longtail"
+  title: "Best Tea for Late Summer"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-08-02":
+  type: "longtail"
+  title: "Iced Tea for August Heat"
+  cta_collection: "iced_tea_blends"
+"2026-08-03":
+  type: "longtail"
+  title: "Best Herbal Tea for End-of-Summer Evenings"
+  cta_collection: "herbal_botanical"
+"2026-08-04":
+  type: "hub"
+  title: "Late Summer Tea Hub"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-08-05":
+  type: "longtail"
+  title: "Tea for Back-to-Work Routine"
+  cta_collection: "daily_comfort"
+"2026-08-06":
+  type: "longtail"
+  title: "Best Tea for Focused Mornings"
+  cta_collection: "focus_energy"
+"2026-08-07":
+  type: "longtail"
+  title: "Afternoon Tea Reset for Busy Days"
+  cta_collection: "detox_cleanse"
+"2026-08-08":
+  type: "longtail"
+  title: "Back-to-Routine Tea Guide"
+  cta_collection: "daily_comfort"
+"2026-08-09":
+  type: "longtail"
+  title: "Best Tea for Students and Study Sessions"
+  cta_collection: "focus_energy"
+"2026-08-10":
+  type: "longtail"
+  title: "Tea for Desk Drawers"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-08-11":
+  type: "longtail"
+  title: "Matcha vs Black Tea for Focus"
+  cta_collection: "matcha"
+"2026-08-12":
+  type: "longtail"
+  title: "Tea for Calm Productivity"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-08-13":
+  type: "hub"
+  title: "Focus Tea Hub"
+  cta_collection: "focus_energy"
+"2026-08-14":
+  type: "longtail"
+  title: "How to Transition From Iced Tea to Hot Tea"
+  cta_collection: "iced_tea_blends"
+"2026-08-15":
+  type: "longtail"
+  title: "Best Tea for Cooler August Nights"
+  cta_collection: "sleep_relaxation"
+"2026-08-16":
+  type: "longtail"
+  title: "Summer-to-Fall Tea Shelf Refresh"
+  cta_collection: "tea_storage_canisters"
+"2026-08-17":
+  type: "hub"
+  title: "Iced Tea to Hot Tea Transition Hub"
+  cta_collection: "iced_tea_blends"
+"2026-08-18":
+  type: "longtail"
+  title: "Tea Storage After Summer"
+  cta_collection: "tea_storage_canisters"
+"2026-08-19":
+  type: "quickfix"
+  title: "Does Tea Go Stale Faster in Heat?"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-08-20":
+  type: "longtail"
+  title: "How to Clean Up Your Tea Shelf"
+  cta_collection: "tea_storage_canisters"
+"2026-08-21":
+  type: "longtail"
+  title: "Tea Shelf Organization Guide"
+  cta_collection: "tea_storage_canisters"
+"2026-08-22":
+  type: "hub"
+  title: "Tea Storage and Organization Hub"
+  cta_collection: "tea_storage_canisters"
+"2026-08-23":
+  type: "longtail"
+  title: "Best Tea for Late Summer Brunch"
+  cta_collection: "lifestyle_gifting"
+"2026-08-24":
+  type: "longtail"
+  title: "Tea Pairings for Stone Fruit"
+  cta_collection: "fruity_tropical_tea"
+"2026-08-25":
+  type: "longtail"
+  title: "Tea Pairings for Light Desserts"
+  cta_collection: "sweet_dessert"
+"2026-08-26":
+  type: "pairing"
+  title: "Late Summer Tea Pairing Guide"
+  cta_collection: "flavor_aroma"
+"2026-08-27":
+  type: "hub"
+  title: "Late Summer Pairing Hub"
+  cta_collection: "flavor_aroma"
+"2026-08-28":
+  type: "longtail"
+  title: "Tea Sampler vs Restocking Favorites"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-08-29":
+  type: "longtail"
+  title: "Best Tea Samplers for Fall Preview"
+  cta_collection: "tea_samplers_variety_packs"
+"2026-08-30":
+  type: "longtail"
+  title: "What Tea to Buy Before Fall"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-08-31":
+  type: "longtail"
+  title: "August Tea Routine Wrap-Up"
+  cta_collection: "daily_comfort"
+"2026-09-01":
+  type: "longtail"
+  title: "Best Tea for Early Fall"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-09-02":
+  type: "longtail"
+  title: "Green Tea vs Black Tea for Fall Mornings"
+  cta_collection: "green_tea"
+"2026-09-03":
+  type: "longtail"
+  title: "Best Tea for Back-to-School Focus"
+  cta_collection: "focus_energy"
+"2026-09-04":
+  type: "hub"
+  title: "Early Fall Tea Hub"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-09-05":
+  type: "longtail"
+  title: "Tea for Workday Focus"
+  cta_collection: "focus_energy"
+"2026-09-06":
+  type: "longtail"
+  title: "Morning Tea Routine for September"
+  cta_collection: "focus_energy"
+"2026-09-07":
+  type: "longtail"
+  title: "Labor Day Tea Ideas"
+  cta_collection: "lifestyle_gifting"
+"2026-09-08":
+  type: "longtail"
+  title: "Tea for Busy Fall Schedules"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-09-09":
+  type: "hub"
+  title: "Focus and Routine Tea Hub"
+  cta_collection: "focus_energy"
+"2026-09-10":
+  type: "longtail"
+  title: "Best Tea for Cooler Evenings"
+  cta_collection: "sleep_relaxation"
+"2026-09-11":
+  type: "longtail"
+  title: "Caffeine-Free Tea for Fall Nights"
+  cta_collection: "organic_caffeine_free"
+"2026-09-12":
+  type: "longtail"
+  title: "Chamomile vs Rooibos for Evening"
+  cta_collection: "rooibos_tea"
+"2026-09-13":
+  type: "longtail"
+  title: "Evening Fall Tea Guide"
+  cta_collection: "sleep_relaxation"
+"2026-09-14":
+  type: "longtail"
+  title: "Best Herbal Tea for Fall Comfort"
+  cta_collection: "herbal_botanical"
+"2026-09-15":
+  type: "longtail"
+  title: "Ginger Tea for Cooler Days"
+  cta_collection: "ginger_tea"
+"2026-09-16":
+  type: "longtail"
+  title: "Turmeric Tea for Fall"
+  cta_collection: "spiced_teas"
+"2026-09-17":
+  type: "hub"
+  title: "Herbal Fall Tea Hub"
+  cta_collection: "herbal_botanical"
+"2026-09-18":
+  type: "longtail"
+  title: "Chai Tea Season: What to Know"
+  cta_collection: "chai"
+"2026-09-19":
+  type: "longtail"
+  title: "Best Spiced Tea for Fall"
+  cta_collection: "iced_tea_blends"
+"2026-09-20":
+  type: "pairing"
+  title: "Cinnamon Tea Pairing Ideas"
+  cta_collection: "spiced_teas"
+"2026-09-21":
+  type: "hub"
+  title: "Spiced Tea Hub"
+  cta_collection: "iced_tea_blends"
+"2026-09-22":
+  type: "longtail"
+  title: "First Day of Fall Tea Routine"
+  cta_collection: "daily_comfort"
+"2026-09-23":
+  type: "longtail"
+  title: "Tea Shelf Reset for Fall"
+  cta_collection: "detox_cleanse"
+"2026-09-24":
+  type: "longtail"
+  title: "How to Store Tea for Cooler Weather"
+  cta_collection: "tea_storage_canisters"
+"2026-09-25":
+  type: "quickfix"
+  title: "Fall Tea Storage Quick Fix"
+  cta_collection: "tea_storage_canisters"
+"2026-09-26":
+  type: "hub"
+  title: "Fall Tea Routine Hub"
+  cta_collection: "daily_comfort"
+"2026-09-27":
+  type: "longtail"
+  title: "Best Tea With Apple Desserts"
+  cta_collection: "fruity_tropical_tea"
+"2026-09-28":
+  type: "longtail"
+  title: "Tea Pairings for Pumpkin and Spice"
+  cta_collection: "fruity_tropical_tea"
+"2026-09-29":
+  type: "longtail"
+  title: "Best Tea for Fall Brunch"
+  cta_collection: "lifestyle_gifting"
+"2026-09-30":
+  type: "longtail"
+  title: "September Tea Routine Wrap-Up"
+  cta_collection: "daily_comfort"
+"2026-10-01":
+  type: "longtail"
+  title: "Best Fall Tea Blends"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-10-02":
+  type: "longtail"
+  title: "Best Caffeine-Free Tea for Fall"
+  cta_collection: "organic_caffeine_free"
+"2026-10-03":
+  type: "longtail"
+  title: "Green Tea vs Chai for Fall"
+  cta_collection: "chai"
+"2026-10-04":
+  type: "hub"
+  title: "Fall Tea Guide Hub"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-10-05":
+  type: "quickfix"
+  title: "Chai Too Spicy? Quick Fix"
+  cta_collection: "chai"
+"2026-10-06":
+  type: "longtail"
+  title: "Best Tea for Cozy Mornings"
+  cta_collection: "focus_energy"
+"2026-10-07":
+  type: "longtail"
+  title: "How to Make a Better Chai Latte at Home"
+  cta_collection: "chai"
+"2026-10-08":
+  type: "hub"
+  title: "Chai Tea Basics Hub"
+  cta_collection: "chai"
+"2026-10-09":
+  type: "longtail"
+  title: "Best Tea for Fall Desserts"
+  cta_collection: "sweet_dessert"
+"2026-10-10":
+  type: "longtail"
+  title: "Tea Pairings for Apple Pie"
+  cta_collection: "fruity_tropical_tea"
+"2026-10-11":
+  type: "longtail"
+  title: "Tea Pairings for Pumpkin Desserts"
+  cta_collection: "fruity_tropical_tea"
+"2026-10-12":
+  type: "hub"
+  title: "Fall Dessert Tea Pairing Hub"
+  cta_collection: "sweet_dessert"
+"2026-10-13":
+  type: "longtail"
+  title: "Best Tea for Cool Weather Evenings"
+  cta_collection: "sleep_relaxation"
+"2026-10-14":
+  type: "longtail"
+  title: "Rooibos Tea for Fall"
+  cta_collection: "rooibos_tea"
+"2026-10-15":
+  type: "longtail"
+  title: "Chamomile Tea for Cozy Nights"
+  cta_collection: "chamomile_tea"
+"2026-10-16":
+  type: "hub"
+  title: "Evening Comfort Tea Hub"
+  cta_collection: "sleep_relaxation"
+"2026-10-17":
+  type: "longtail"
+  title: "Best Tea Gifts for Fall"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-10-18":
+  type: "longtail"
+  title: "Tea Samplers for Cozy Season"
+  cta_collection: "tea_samplers_variety_packs"
+"2026-10-19":
+  type: "longtail"
+  title: "How to Build a Fall Tea Flight"
+  cta_collection: "flavor_aroma"
+"2026-10-20":
+  type: "hub"
+  title: "Fall Tea Discovery Hub"
+  cta_collection: "flavor_aroma"
+"2026-10-21":
+  type: "quickfix"
+  title: "Tea Tastes Too Heavy? Quick Fix"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-10-22":
+  type: "longtail"
+  title: "Best Tea for Halloween Treats"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-10-23":
+  type: "longtail"
+  title: "Spiced Tea vs Dessert Tea"
+  cta_collection: "iced_tea_blends"
+"2026-10-24":
+  type: "pairing"
+  title: "Halloween Tea Pairing Guide"
+  cta_collection: "flavor_aroma"
+"2026-10-25":
+  type: "hub"
+  title: "Fall Hosting Tea Hub"
+  cta_collection: "lifestyle_gifting"
+"2026-10-26":
+  type: "longtail"
+  title: "Best Tea for Movie Nights"
+  cta_collection: "sleep_relaxation"
+"2026-10-27":
+  type: "longtail"
+  title: "Tea for Rainy Days"
+  cta_collection: "daily_comfort"
+"2026-10-28":
+  type: "longtail"
+  title: "How to Refresh Your Tea Shelf for Cozy Season"
+  cta_collection: "daily_comfort"
+"2026-10-29":
+  type: "longtail"
+  title: "Best Tea Before the Holidays"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-10-30":
+  type: "longtail"
+  title: "October Tea Routine Checklist"
+  cta_collection: "daily_comfort"
+"2026-10-31":
+  type: "longtail"
+  title: "October Tea Routine Wrap-Up"
+  cta_collection: "daily_comfort"
+"2026-11-01":
+  type: "longtail"
+  title: "Best Tea for November"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-02":
+  type: "longtail"
+  title: "Best Tea for Thanksgiving Dinner"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-03":
+  type: "longtail"
+  title: "Tea Pairings for Thanksgiving Desserts"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-04":
+  type: "hub"
+  title: "Thanksgiving Tea Hub"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-05":
+  type: "longtail"
+  title: "Best Tea With Pumpkin Pie"
+  cta_collection: "fruity_tropical_tea"
+"2026-11-06":
+  type: "longtail"
+  title: "Best Tea With Apple Pie"
+  cta_collection: "fruity_tropical_tea"
+"2026-11-07":
+  type: "longtail"
+  title: "Black Tea vs Rooibos for Desserts"
+  cta_collection: "rooibos_tea"
+"2026-11-08":
+  type: "hub"
+  title: "Holiday Dessert Tea Pairing Hub"
+  cta_collection: "sweet_dessert"
+"2026-11-09":
+  type: "longtail"
+  title: "Best Tea Gifts for the Holidays"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-10":
+  type: "longtail"
+  title: "Tea Gift Sets for Beginners"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-11":
+  type: "longtail"
+  title: "Tea Samplers for Holiday Gifting"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-12":
+  type: "hub"
+  title: "Holiday Tea Gift Hub"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-13":
+  type: "longtail"
+  title: "How to Pick a Tea Gift Without Guessing"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-14":
+  type: "longtail"
+  title: "Best Caffeine-Free Tea Gifts"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-15":
+  type: "longtail"
+  title: "Tea Gift Basket Ideas"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-16":
+  type: "longtail"
+  title: "Holiday Tea Gift Guide"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-17":
+  type: "longtail"
+  title: "Best Tea for Cozy Evenings"
+  cta_collection: "sleep_relaxation"
+"2026-11-18":
+  type: "longtail"
+  title: "Chai vs Rooibos for Cold Weather"
+  cta_collection: "chai"
+"2026-11-19":
+  type: "longtail"
+  title: "Herbal Tea for Winter Prep"
+  cta_collection: "herbal_botanical"
+"2026-11-20":
+  type: "hub"
+  title: "Cozy Tea Routine Hub"
+  cta_collection: "daily_comfort"
+"2026-11-21":
+  type: "longtail"
+  title: "Best Tea for Thanksgiving Hosting"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-22":
+  type: "longtail"
+  title: "Tea for Guests After Dinner"
+  cta_collection: "lifestyle_gifting"
+"2026-11-23":
+  type: "longtail"
+  title: "Make-Ahead Tea for Holiday Hosting"
+  cta_collection: "lifestyle_gifting"
+"2026-11-24":
+  type: "longtail"
+  title: "Thanksgiving Hosting Tea Guide"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-25":
+  type: "longtail"
+  title: "Last-Minute Thanksgiving Tea Ideas"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-26":
+  type: "longtail"
+  title: "Thanksgiving Tea Pairings"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-27":
+  type: "longtail"
+  title: "Black Friday Tea Gift Guide"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-28":
+  type: "longtail"
+  title: "Tea Sampler Deals: What to Look For"
+  cta_collection: "tea_samplers_variety_packs"
+"2026-11-29":
+  type: "longtail"
+  title: "Cyber Monday Tea Gift Ideas"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-11-30":
+  type: "longtail"
+  title: "November Tea Routine Wrap-Up"
+  cta_collection: "daily_comfort"
+"2026-12-01":
+  type: "longtail"
+  title: "Best Tea Gifts for Christmas"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-02":
+  type: "longtail"
+  title: "Tea Gift Sets for Every Type of Tea Drinker"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-03":
+  type: "longtail"
+  title: "Best Tea Samplers for Holiday Gifts"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-04":
+  type: "hub"
+  title: "Christmas Tea Gift Hub"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-05":
+  type: "longtail"
+  title: "Best Caffeine-Free Tea for Winter"
+  cta_collection: "organic_caffeine_free"
+"2026-12-06":
+  type: "longtail"
+  title: "Best Tea for Cold Weather"
+  cta_collection: "functional_wellness"
+"2026-12-07":
+  type: "longtail"
+  title: "Chai Tea for Winter"
+  cta_collection: "chai"
+"2026-12-08":
+  type: "hub"
+  title: "Winter Tea Basics Hub"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-09":
+  type: "longtail"
+  title: "Tea Pairings for Holiday Cookies"
+  cta_collection: "sweet_dessert"
+"2026-12-10":
+  type: "longtail"
+  title: "Tea Pairings for Chocolate"
+  cta_collection: "sweet_dessert"
+"2026-12-11":
+  type: "longtail"
+  title: "Tea Pairings for Holiday Desserts"
+  cta_collection: "sweet_dessert"
+"2026-12-12":
+  type: "hub"
+  title: "Holiday Dessert Tea Pairing Hub"
+  cta_collection: "sweet_dessert"
+"2026-12-13":
+  type: "longtail"
+  title: "Best Tea for Holiday Guests"
+  cta_collection: "lifestyle_gifting"
+"2026-12-14":
+  type: "longtail"
+  title: "How to Serve Tea at a Holiday Table"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-15":
+  type: "longtail"
+  title: "Tea for Christmas Brunch"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-16":
+  type: "hub"
+  title: "Holiday Hosting Tea Hub"
+  cta_collection: "lifestyle_gifting"
+"2026-12-17":
+  type: "longtail"
+  title: "Last-Minute Tea Gifts"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-18":
+  type: "longtail"
+  title: "Stocking Stuffer Tea Ideas"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-19":
+  type: "longtail"
+  title: "Tea Gifts Under Simple Budgets"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-20":
+  type: "hub"
+  title: "Last-Minute Holiday Tea Gift Hub"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-21":
+  type: "longtail"
+  title: "Winter Solstice Tea Routine"
+  cta_collection: "daily_comfort"
+"2026-12-22":
+  type: "longtail"
+  title: "Best Tea for Quiet Winter Nights"
+  cta_collection: "sleep_relaxation"
+"2026-12-23":
+  type: "longtail"
+  title: "Caffeine-Free Tea for Holiday Evenings"
+  cta_collection: "organic_caffeine_free"
+"2026-12-24":
+  type: "longtail"
+  title: "Christmas Eve Tea Ideas"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-25":
+  type: "longtail"
+  title: "Christmas Day Tea Routine"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-26":
+  type: "longtail"
+  title: "Tea Shelf Reset After the Holidays"
+  cta_collection: "detox_cleanse"
+"2026-12-27":
+  type: "longtail"
+  title: "Best Tea for New Year Reset"
+  cta_collection: "detox_cleanse"
+"2026-12-28":
+  type: "longtail"
+  title: "Gentle Tea Routine for the New Year"
+  cta_collection: "daily_comfort"
+"2026-12-29":
+  type: "longtail"
+  title: "Tea Goals for the New Year"
+  cta_collection: "tea_gift_sets_samplers"
+"2026-12-30":
+  type: "hub"
+  title: "New Year Tea Routine Hub"
+  cta_collection: "daily_comfort"
+"2026-12-31":
+  type: "longtail"
+  title: "Year-End Tea Shelf Refresh"
+  cta_collection: "tea_storage_canisters"
