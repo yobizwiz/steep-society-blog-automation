@@ -2,8 +2,9 @@ name: Weekly Blog Automation
 
 on:
   schedule:
-    # 매주 일요일 06:00 UTC (= 토요일 23:00 PDT) — 기본 주간 자동화
-    - cron: '0 6 * * 0'
+    # 매주 금요일 13:00 UTC (= 09:00 AM EDT) — 사용자가 깨어있을 시간에 트리거하여
+    # 에러 발생 시 즉시 대응 가능하도록. 11월 첫째 일요일 EST 전환 시 14:00 UTC로 변경 필요.
+    - cron: '0 13 * * 5'
   workflow_dispatch:
     inputs:
       start_date:
