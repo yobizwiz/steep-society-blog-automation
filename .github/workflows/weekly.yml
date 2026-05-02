@@ -2,8 +2,8 @@ name: Weekly Blog Automation
 
 on:
   schedule:
-    # 매주 금요일 13:00 UTC (= 09:00 AM EDT) — 사용자가 깨어있을 시간에 트리거하여
-    # 에러 발생 시 즉시 대응 가능하도록. 11월 첫째 일요일 EST 전환 시 14:00 UTC로 변경 필요.
+    # 매주 금요일 13:00 UTC (= 09:00 AM EDT) — 트리거 시 다음주 월~일 7일치를 미리 생성.
+    # 사용자가 깨어있는 시간이라 에러 발생 시 즉시 대응 가능. 11월 EST 전환 시 14:00 UTC로 변경 필요.
     - cron: '0 13 * * 5'
   workflow_dispatch:
     inputs:
@@ -57,8 +57,10 @@ jobs:
             echo "[trigger] manual workflow_dispatch with start_date=${{ github.event.inputs.start_date }}"
             python src/weekly.py --start "${{ github.event.inputs.start_date }}" --days "${{ github.event.inputs.days }}"
           else
-            echo "[trigger] default cron — tomorrow + 7 days"
-            python src/weekly.py --days 7
+            # Friday cron — generate next week (Monday through Sunday, 7 days)
+            NEXT_MON=$(date -u -d "next monday" +%Y-%m-%d)
+            echo "[trigger] Friday cron — next Monday = $NEXT_MON, generating 7 days (Mon-Sun)"
+            python src/weekly.py --start "$NEXT_MON" --days 7
           fi
 
       - name: Upload weekly report
