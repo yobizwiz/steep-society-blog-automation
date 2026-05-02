@@ -41,6 +41,26 @@ def _gql(env, query, variables=None):
     return data["data"]
 
 
+def find_article_by_publish_date(env, date_str):
+    """Look up Shopify article scheduled to publish on date_str (YYYY-MM-DD).
+    Returns dict {id, title, handle, publishedAt, isPublished} if exists, else None.
+    Used to skip duplicate generation on weekly cron trigger.
+    """
+    q = (
+        '{ articles(first: 50, sortKey: UPDATED_AT, reverse: true) '
+        '{ edges { node { id title handle publishedAt isPublished } } } }'
+    )
+    res = _gql(env, q)
+    edges = res.get("articles", {}).get("edges", [])
+    for e in edges:
+        n = e.get("node") or {}
+        pub = (n.get("publishedAt") or "")
+        if pub.startswith(date_str):
+            return {"id": n["id"], "title": n["title"], "handle": n["handle"],
+                    "publishedAt": pub, "isPublished": n.get("isPublished")}
+    return None
+
+
 def get_blog_id(env, blog_handle):
     data = _api(env, "blogs.json")
     for b in data.get("blogs", []):
