@@ -99,8 +99,9 @@ def upload_image(env, *, webp_bytes, filename, alt):
           node(id: $id) { ... on MediaImage { image { url } fileStatus } }
         }""", {"id": file_id})
         node = res.get("node") or {}
-        if node.get("image", {}).get("url"):
-            cdn_url = node["image"]["url"]
+        image = node.get("image") or {}
+        if image.get("url"):
+            cdn_url = image["url"]
             break
         if node.get("fileStatus") == "FAILED":
             raise RuntimeError("fileCreate FAILED")
