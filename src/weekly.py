@@ -10,8 +10,8 @@ from utils import CONFIG_DIR, OUTPUT_DIR, ensure_dirs, load_env, load_yaml, log
 from content import generate_full_article
 from validators import validate
 from images import generate_image_for_slot
-from shopify_pub import (admin_url, create_article, get_blog_id,
-                          insert_body_images, public_url, upload_image)
+from shopify_pub import (admin_url, create_article, find_article_by_publish_date,
+                          get_blog_id, insert_body_images, public_url, upload_image)
 
 
 def process_one_day(date, env, sched, cols):
@@ -23,6 +23,21 @@ def process_one_day(date, env, sched, cols):
         summary["status"] = "skipped"
         summary["error"] = f"No schedule entry for {date}"
         log(f"SKIP: {summary['error']}", "WARN")
+        return summary
+
+    # Skip if Shopify already has an article scheduled for this date (duplicate prevention)
+    try:
+        existing = find_article_by_publish_date(env, date)
+    except Exception as e:
+        log(f"  Shopify 중복 체크 실패 (계속 진행): {e}", "WARN")
+        existing = None
+    if existing:
+        summary["status"] = "skipped"
+        summary["error"] = f"이미 Shopify에 발행 예약된 글 있음: {existing['handle']}"
+        summary["title"] = sched[date]["title"]
+        summary["handle"] = existing["handle"]
+        summary["article_id"] = existing["id"].split("/")[-1] if isinstance(existing["id"], str) else existing["id"]
+        log(f"⏭ {date}: SKIP (이미 존재) — {existing['handle']}", "WARN")
         return summary
 
     entry = sched[date]
