@@ -142,11 +142,31 @@ def create_article(env, *, blog_id, article, featured_image_url, featured_image_
         "published": (publish_mode == "publish"),
     }
 
-    payload = {"article": {k: v for k, v in pa.items() if v is not None}}
-    res = _api(env, f"blogs/{blog_id}/articles.json", method="POST", body=payload)
+    # Try with original handle first; on 422 'handle has already been taken' retry with -2,-3,-4,-5
+    original_handle = pa["handle"]
+    res = None
+    last_err = None
+    for suffix in [""] + [f"-{i}" for i in range(2, 6)]:
+        if suffix:
+            pa["handle"] = f"{original_handle}{suffix}"
+            log(f"  handle 충돌 — 재시도: {pa['handle']}", "WARN")
+        payload = {"article": {k: v for k, v in pa.items() if v is not None}}
+        try:
+            res = _api(env, f"blogs/{blog_id}/articles.json", method="POST", body=payload)
+            break
+        except RuntimeError as e:
+            msg = str(e)
+            if "has already been taken" in msg:
+                last_err = e
+                continue
+            raise
+    if res is None:
+        raise RuntimeError(f"handle 충돌 5회 재시도 모두 실패: {last_err}")
     art = res["article"]
     article_id = art["id"]
-    log(f"  created id={article_id}")
+    # Update article dict so downstream (preview, report, email) sees final handle
+    article["url_slug"] = art.get("handle", original_handle)
+    log(f"  created id={article_id} handle={art.get('handle')}")
 
     # If scheduled mode, use GraphQL articleUpdate to set future publishedAt
     if publish_mode == "scheduled" and scheduled_at:
