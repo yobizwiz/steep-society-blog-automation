@@ -73,14 +73,13 @@ jobs:
             output/*-article.json
           retention-days: 30
 
-      - name: Send result email
+      - name: Send result Telegram
         if: always()
         continue-on-error: true
         env:
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
-        run: python src/send_email.py
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python src/send_telegram.py
 
       - name: Verify all days succeeded
         if: always()
