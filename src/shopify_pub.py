@@ -149,6 +149,7 @@ def create_article(env, *, blog_id, article, featured_image_url, featured_image_
     log(f"  create article (mode={publish_mode}): {article['title'][:60]}")
     pa = {
         "title": article["title"],
+        "author": "Steep Society",
         "body_html": body_html,
         "summary_html": f"<p>{article.get('summary', '')}</p>" if article.get("summary") else None,
         "tags": ", ".join(article.get("tags", [])),
