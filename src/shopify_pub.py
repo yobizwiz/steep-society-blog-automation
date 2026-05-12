@@ -143,10 +143,40 @@ def insert_body_images(body_html, body_image_urls):
     return out
 
 
+
+def _apply_paragraph_spacing(html):
+    """Force consistent paragraph + heading spacing across all themes.
+    Some Shopify themes ship with tight default margins; this guarantees readable air."""
+    import re
+    def patch_p(m):
+        attrs = m.group(1) or ""
+        if "style=" in attrs.lower():
+            return m.group(0)
+        return f'<p{attrs} style="margin: 0 0 1.4em; line-height: 1.75;">'
+    def patch_h(m):
+        tag = m.group(1)
+        attrs = m.group(2) or ""
+        if "style=" in attrs.lower():
+            return m.group(0)
+        return f'<{tag}{attrs} style="margin: 1.6em 0 0.6em; line-height: 1.3;">'
+    def patch_li(m):
+        attrs = m.group(1) or ""
+        if "style=" in attrs.lower():
+            return m.group(0)
+        return f'<li{attrs} style="margin: 0 0 0.5em; line-height: 1.7;">'
+    html = re.sub(r"<p(\s+[^>]*)?>", patch_p, html, flags=re.IGNORECASE)
+    html = re.sub(r"<(h[23])(\s+[^>]*)?>", patch_h, html, flags=re.IGNORECASE)
+    html = re.sub(r"<li(\s+[^>]*)?>", patch_li, html, flags=re.IGNORECASE)
+    return html
+
+
 def create_article(env, *, blog_id, article, featured_image_url, featured_image_alt,
                     body_html, publish_mode="draft", scheduled_at=None):
     """publish_mode: draft / publish / scheduled (with scheduled_at ISO 8601 UTC)"""
     log(f"  create article (mode={publish_mode}): {article['title'][:60]}")
+    # Apply paragraph + heading spacing to ensure readable layout on any theme
+    body_html = _apply_paragraph_spacing(body_html)
+
     pa = {
         "title": article["title"],
         "author": "Steep Society",
