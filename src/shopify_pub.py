@@ -145,25 +145,26 @@ def insert_body_images(body_html, body_image_urls):
 
 
 def _apply_paragraph_spacing(html):
-    """Force consistent paragraph + heading spacing across all themes.
-    Some Shopify themes ship with tight default margins; this guarantees readable air."""
+    """Force consistent paragraph + heading spacing AND font-size across all themes.
+    Some Shopify themes ship with tight margins / small body font; this guarantees readable air."""
     import re
     def patch_p(m):
         attrs = m.group(1) or ""
         if "style=" in attrs.lower():
             return m.group(0)
-        return f'<p{attrs} style="margin: 0 0 1.4em; line-height: 1.75;">'
+        return f'<p{attrs} style="margin: 0 0 1.4em; line-height: 1.75; font-size: 17px;">'
     def patch_h(m):
         tag = m.group(1)
         attrs = m.group(2) or ""
         if "style=" in attrs.lower():
             return m.group(0)
-        return f'<{tag}{attrs} style="margin: 1.6em 0 0.6em; line-height: 1.3;">'
+        size = "1.5em" if tag.lower() == "h2" else "1.25em"
+        return f'<{tag}{attrs} style="margin: 1.6em 0 0.6em; line-height: 1.3; font-size: {size};">'
     def patch_li(m):
         attrs = m.group(1) or ""
         if "style=" in attrs.lower():
             return m.group(0)
-        return f'<li{attrs} style="margin: 0 0 0.5em; line-height: 1.7;">'
+        return f'<li{attrs} style="margin: 0 0 0.5em; line-height: 1.7; font-size: 17px;">'
     html = re.sub(r"<p(\s+[^>]*)?>", patch_p, html, flags=re.IGNORECASE)
     html = re.sub(r"<(h[23])(\s+[^>]*)?>", patch_h, html, flags=re.IGNORECASE)
     html = re.sub(r"<li(\s+[^>]*)?>", patch_li, html, flags=re.IGNORECASE)
