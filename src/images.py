@@ -50,7 +50,8 @@ class ImagenSafetyBlocked(RuntimeError):
 
 
 def generate_imagen(prompt, *, api_key, model="imagen-4.0-generate-001",
-                     n=1, aspect_ratio="16:9", max_retries=3):
+                     n=1, aspect_ratio="16:9", max_retries=5):
+    """Generate image via Imagen API with exponential backoff for 429 rate limits."""
     url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
            f"{model}:predict?key={api_key}")
     body = json.dumps({
@@ -58,6 +59,8 @@ def generate_imagen(prompt, *, api_key, model="imagen-4.0-generate-001",
         "parameters": {"sampleCount": n, "aspectRatio": aspect_ratio,
                        "personGeneration": "dont_allow"},
     }).encode("utf-8")
+    # Backoff seconds for attempts 1..5 (cumulative covers up to ~13 min)
+    backoff_429 = [30, 90, 180, 360, 600]
     last_err = None
     for attempt in range(1, max_retries + 1):
         req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
@@ -71,7 +74,6 @@ def generate_imagen(prompt, *, api_key, model="imagen-4.0-generate-001",
                     out.append(base64.b64decode(b64))
             if out:
                 return out
-            # empty predictions = safety filter block; retrying same prompt won't help
             raise ImagenSafetyBlocked(
                 "empty predictions (safety filter blocked - prompt likely contains person/sensitive content)"
             )
@@ -82,12 +84,24 @@ def generate_imagen(prompt, *, api_key, model="imagen-4.0-generate-001",
             last_err = f"HTTP {e.code}: {body_text}"
             if e.code in (400, 401, 403):
                 raise RuntimeError(f"Imagen API {last_err}")
-            log(f"  Imagen 시도 {attempt}/{max_retries} 실패 ({e.code}), {5*attempt}초 후 재시도", "WARN")
-            time.sleep(5 * attempt)
+            if e.code == 429:
+                retry_after = 0
+                try:
+                    retry_after = int(e.headers.get("Retry-After", "0") or "0")
+                except Exception:
+                    pass
+                wait = max(retry_after, backoff_429[min(attempt - 1, len(backoff_429) - 1)])
+                log(f"  Imagen 429 (rate limit) 시도 {attempt}/{max_retries}, {wait}초 대기", "WARN")
+                time.sleep(wait)
+            else:
+                wait = 5 * attempt
+                log(f"  Imagen {e.code} 시도 {attempt}/{max_retries}, {wait}초 후 재시도", "WARN")
+                time.sleep(wait)
         except Exception as e:
             last_err = str(e)
-            log(f"  Imagen 시도 {attempt}/{max_retries} 예외, 재시도", "WARN")
-            time.sleep(5 * attempt)
+            wait = 5 * attempt
+            log(f"  Imagen 예외 시도 {attempt}/{max_retries}: {e} ({wait}초 후 재시도)", "WARN")
+            time.sleep(wait)
     raise RuntimeError(f"Imagen 재시도 모두 실패: {last_err}")
 
 
