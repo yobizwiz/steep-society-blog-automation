@@ -71,6 +71,8 @@ OUTPUT_SCHEMA_INSTRUCTION = """OUTPUT FORMAT - return ONE JSON object with EXACT
     "content_quality": {"score": 10, "reason": "..."},
     "onpage_seo": {"score": 10, "reason": "..."},
     "conversion_alignment": {"score": 10, "reason": "..."},
+    "ai_search_optimization": {"score": 10, "reason": "Quick Answer 2-3문단 내, 단일 사실 문장, 숫자/측정 풍부, FAQ+Article JSON-LD"},
+    "eeat": {"score": 10, "reason": "Experience+Expertise+Authoritativeness+Trustworthiness"},
     "body_judgment": "...",
     "page_judgment": "page-level acknowledges template deductions are template issues, not body issues",
     "deductions": []
@@ -157,6 +159,8 @@ Output JSON:
   "content_weaknesses": ["..."],
   "seo_weaknesses": ["..."],
   "conversion_weaknesses": ["..."],
+  "aiso_weaknesses": ["AI 검색 인용 친화성 — Quick Answer 위치, citable atomic facts, JSON-LD"],
+  "eeat_weaknesses": ["Experience/Expertise/Authoritativeness/Trustworthiness 부족 지적"],
   "structure_violations": ["..."],
   "specific_rewrites": [{"location": "...", "issue": "...", "suggested": "..."}],
   "overall_priority": "..."
@@ -233,11 +237,13 @@ def cross_review(revised, env):
     return out
 
 
-GEMINI_REVIEW_SYSTEM = """You are an independent SEO + content reviewer for a Shopify lifestyle/wellness blog. Score the article you receive on THREE dimensions (0-10 each):
+GEMINI_REVIEW_SYSTEM = """You are an independent SEO + content reviewer for a Shopify lifestyle/wellness blog. Score the article on FIVE dimensions (0-10 each):
 
-1. **content_quality** — Distinct angle, specific actionable info, AI-citation-friendly sentences, no fluff.
-2. **onpage_seo** — Meta title 50-60 chars, meta description 140-160, primary keyword in title/slug/meta/intro, FAQPage + Article JSON-LD inline in body, 5-row table max.
+1. **content_quality** — Distinct angle, specific actionable info, no fluff, original insight.
+2. **onpage_seo** — Meta title 50-60 chars, meta description 140-160, primary keyword in title/slug/meta/intro, 5-row table max.
 3. **conversion_alignment** — Single CTA after Quick Recap with collection-name-1:1 button text, no orphan product mentions, Quick Answer in first 2-3 paragraphs.
+4. **ai_search_optimization** — AI citation-friendly: Quick Answer in 1st-3rd paragraph, single-fact atomic sentences, numbers/measurements, FAQPage + Article JSON-LD inline in body. Optimized for ChatGPT/Perplexity/Google AI Overview citation.
+5. **eeat** — Google E-E-A-T quality signals: Experience (actual tested insights), Expertise (specific accurate data e.g. brewing temps), Authoritativeness (consistent brand voice), Trustworthiness (no factual errors, no contradictions).
 
 Be brutally honest. Most articles deserve 7-9, not 10. Cite specific weaknesses.
 
@@ -246,6 +252,8 @@ Output ONE JSON object with EXACTLY these fields, no other text:
   "content_quality": {"score": 0-10, "reason": "specific reasoning under 200 chars"},
   "onpage_seo": {"score": 0-10, "reason": "specific reasoning under 200 chars"},
   "conversion_alignment": {"score": 0-10, "reason": "specific reasoning under 200 chars"},
+  "ai_search_optimization": {"score": 0-10, "reason": "specific reasoning under 200 chars"},
+  "eeat": {"score": 0-10, "reason": "specific reasoning under 200 chars"},
   "top_3_weaknesses": ["weakness 1", "weakness 2", "weakness 3"]
 }"""
 
@@ -312,15 +320,17 @@ def merge_gemini_into_judgment(article, gemini):
 
 
 def combined_min_score(article):
-    """Min across all reviewer models — Anthropic (3 scores) + Gemini (3 scores if present)."""
+    """Min across all reviewer models — Anthropic (5 scores) + Gemini (5 scores if present)."""
+    DIMS = ("content_quality", "onpage_seo", "conversion_alignment",
+            "ai_search_optimization", "eeat")
     j = article.get("internal_judgment", {}) or {}
     scores = []
-    for k in ("content_quality", "onpage_seo", "conversion_alignment"):
+    for k in DIMS:
         v = (j.get(k) or {}).get("score", 0)
         try: scores.append(int(v))
         except (TypeError, ValueError): pass
     gem = j.get("gemini_review") or {}
-    for k in ("content_quality", "onpage_seo", "conversion_alignment"):
+    for k in DIMS:
         v = (gem.get(k) or {}).get("score", 0)
         try: scores.append(int(v))
         except (TypeError, ValueError): pass
