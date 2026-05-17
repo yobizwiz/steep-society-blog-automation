@@ -233,6 +233,100 @@ def cross_review(revised, env):
     return out
 
 
+GEMINI_REVIEW_SYSTEM = """You are an independent SEO + content reviewer for a Shopify lifestyle/wellness blog. Score the article you receive on THREE dimensions (0-10 each):
+
+1. **content_quality** — Distinct angle, specific actionable info, AI-citation-friendly sentences, no fluff.
+2. **onpage_seo** — Meta title 50-60 chars, meta description 140-160, primary keyword in title/slug/meta/intro, FAQPage + Article JSON-LD inline in body, 5-row table max.
+3. **conversion_alignment** — Single CTA after Quick Recap with collection-name-1:1 button text, no orphan product mentions, Quick Answer in first 2-3 paragraphs.
+
+Be brutally honest. Most articles deserve 7-9, not 10. Cite specific weaknesses.
+
+Output ONE JSON object with EXACTLY these fields, no other text:
+{
+  "content_quality": {"score": 0-10, "reason": "specific reasoning under 200 chars"},
+  "onpage_seo": {"score": 0-10, "reason": "specific reasoning under 200 chars"},
+  "conversion_alignment": {"score": 0-10, "reason": "specific reasoning under 200 chars"},
+  "top_3_weaknesses": ["weakness 1", "weakness 2", "weakness 3"]
+}"""
+
+
+def gemini_review(article, env):
+    """Independent cross-model review by Gemini 2.5 Pro.
+    Returns dict with scores + weaknesses. Does NOT modify article body."""
+    log("[Pass 4b] Gemini cross-validation (model=gemini-pro-latest)")
+    api_key = env.get("GOOGLE_API_KEY")
+    if not api_key:
+        log("[Pass 4b] GOOGLE_API_KEY missing — skipping", "WARN")
+        return None
+    body_excerpt = _strip_html(article.get("body_html",""))[:6000]
+    user_msg = (
+        "Score this article. Be tough.\n\n"
+        f"Title: {article.get('title','?')}\n"
+        f"Meta title: {article.get('meta_title','?')}\n"
+        f"Meta description: {article.get('meta_description','?')}\n"
+        f"Slug: {article.get('url_slug','?')}\n\n"
+        f"Body (excerpt):\n{body_excerpt}"
+    )
+    payload = {
+        "contents": [{
+            "role": "user",
+            "parts": [{"text": user_msg}]
+        }],
+        "systemInstruction": {"parts": [{"text": GEMINI_REVIEW_SYSTEM}]},
+        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 1500}
+    }
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key={api_key}"
+    last_err = None
+    for attempt in range(1, 4):
+        try:
+            req = urllib.request.Request(url, data=json.dumps(payload).encode(),
+                headers={"Content-Type":"application/json"})
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read())
+            cand = (data.get("candidates") or [{}])[0]
+            text = "".join(p.get("text","") for p in (cand.get("content",{}).get("parts") or []))
+            result = _extract_json(text)
+            log("[Pass 4b] Gemini done — content={} seo={} conv={}".format(
+                result.get("content_quality",{}).get("score","?"),
+                result.get("onpage_seo",{}).get("score","?"),
+                result.get("conversion_alignment",{}).get("score","?")))
+            return result
+        except Exception as e:
+            last_err = e
+            log(f"[Pass 4b] attempt {attempt}/3 failed: {str(e)[:120]}", "WARN")
+            if attempt < 3:
+                import time
+                time.sleep(5 * attempt)
+    log(f"[Pass 4b] Gemini review failed after 3 attempts: {last_err} — continuing without it", "WARN")
+    return None
+
+
+def merge_gemini_into_judgment(article, gemini):
+    """Merge Gemini scores into article.internal_judgment as nested 'gemini_review' field
+    and compute a combined min_score (Anthropic min vs Gemini min — take overall min)."""
+    if not gemini:
+        return article
+    j = article.setdefault("internal_judgment", {})
+    j["gemini_review"] = gemini
+    return article
+
+
+def combined_min_score(article):
+    """Min across all reviewer models — Anthropic (3 scores) + Gemini (3 scores if present)."""
+    j = article.get("internal_judgment", {}) or {}
+    scores = []
+    for k in ("content_quality", "onpage_seo", "conversion_alignment"):
+        v = (j.get(k) or {}).get("score", 0)
+        try: scores.append(int(v))
+        except (TypeError, ValueError): pass
+    gem = j.get("gemini_review") or {}
+    for k in ("content_quality", "onpage_seo", "conversion_alignment"):
+        v = (gem.get(k) or {}).get("score", 0)
+        try: scores.append(int(v))
+        except (TypeError, ValueError): pass
+    return min(scores) if scores else 0
+
+
 def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=None,
                           target_score=10, max_perfection_passes=2):
     env = load_env()
@@ -244,9 +338,16 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
     revised = revise(draft, critique, env, original_user_prompt=user_prompt)
     best = cross_review(revised, env)
 
+    # Pass 4b: Gemini independent cross-validation (does not modify body)
+    try:
+        gemini = gemini_review(best, env)
+        best = merge_gemini_into_judgment(best, gemini)
+    except Exception as e:
+        log(f"[Pass 4b] Gemini review error: {e} — continuing without", "WARN")
+
     from perfection import perfection_pass, min_score
-    best_score = min_score(best)
-    log("\n--- after cross-review min: " + str(best_score) + "/10 ---")
+    best_score = combined_min_score(best)
+    log("\n--- after cross-review + Gemini, combined min: " + str(best_score) + "/10 ---")
     for i in range(max_perfection_passes):
         if best_score >= target_score:
             log("target " + str(target_score) + "/10 reached")
@@ -254,10 +355,16 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
         log("\n--- perfection iter " + str(i+1) + "/" + str(max_perfection_passes) + " ---")
         try:
             cand = perfection_pass(best, env)
+            # Re-validate with Gemini after perfection
+            try:
+                gem2 = gemini_review(cand, env)
+                cand = merge_gemini_into_judgment(cand, gem2)
+            except Exception as e:
+                log(f"[Pass 4b] post-perfection Gemini error: {e}", "WARN")
         except Exception as e:
             log("perfection failed: " + str(e), "WARN")
             break
-        cs = min_score(cand)
+        cs = combined_min_score(cand)
         if cs >= best_score:
             best = cand
             best_score = cs
