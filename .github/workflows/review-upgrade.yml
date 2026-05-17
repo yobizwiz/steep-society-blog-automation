@@ -1,0 +1,80 @@
+name: Review & Upgrade Existing Articles
+
+on:
+  schedule:
+    # 매시간 정각 — cursor 있으면 다음 batch 자동 진행, 없으면 즉시 종료
+    - cron: '5 * * * *'
+  workflow_dispatch:
+    inputs:
+      blog_handle:
+        description: 'Blog handle (steep-society-journal or home-cafe-baking)'
+        required: true
+      batch_size:
+        description: 'Articles per batch (default 15)'
+        required: false
+        default: '15'
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create api-keys.txt
+        run: |
+          cat > api-keys.txt <<'EOF'
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL=${{ secrets.ANTHROPIC_MODEL }}
+          ANTHROPIC_REVIEW_MODEL=${{ secrets.ANTHROPIC_REVIEW_MODEL }}
+          GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+          IMAGEN_MODEL=${{ secrets.IMAGEN_MODEL }}
+          SHOPIFY_STORE_URL=${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
+          PUBLISH_MODE=${{ secrets.PUBLISH_MODE }}
+          IMAGE_VARIANTS_PER_SLOT=${{ secrets.IMAGE_VARIANTS_PER_SLOT }}
+          EOF
+
+      - name: Download cursor (if exists from prior run)
+        uses: actions/download-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: upgrade-cursor
+          path: output/
+
+      - name: Run review + upgrade batch
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          BLOG_HANDLE="${{ github.event.inputs.blog_handle || secrets.SHOPIFY_BLOG_HANDLE }}"
+          BATCH_SIZE="${{ github.event.inputs.batch_size || '15' }}"
+          python src/review_and_upgrade.py --blog_handle "$BLOG_HANDLE" --batch_size "$BATCH_SIZE" --max_time_min 80
+
+      - name: Upload cursor (so next run can resume)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgrade-cursor
+          path: output/upgrade-cursor-*.json
+          retention-days: 30
+          overwrite: true
+
+      - name: Upload batch report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgrade-batch-${{ github.run_id }}
+          path: output/upgrade-batch-*.json
+          retention-days: 30
