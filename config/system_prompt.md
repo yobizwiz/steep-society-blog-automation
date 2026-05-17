@@ -106,6 +106,8 @@
     "content_quality": {"score": 0-10, "reason": "..."},
     "onpage_seo": {"score": 0-10, "reason": "..."},
     "conversion_alignment": {"score": 0-10, "reason": "..."},
+    "ai_search_optimization": {"score": 0-10, "reason": "..."},
+    "eeat": {"score": 0-10, "reason": "..."},
     "body_judgment": "...",
     "page_judgment": "page-level acknowledges template deductions are template issues",
     "deductions": []
@@ -115,7 +117,29 @@
 
 ## 12. 판정 형식
 
-- 콘텐츠/SEO/전환 각 x/10 + 이유. 거짓 10/10 금지.
+- 5개 차원 각 x/10 + 이유: 콘텐츠 / 온페이지 SEO / 전환 정합성 / AI 검색 최적화 (AISO) / E-E-A-T.
+- 거짓 10/10 금지. AISO + E-E-A-T 각각 별도 항목으로 평가.
+
+### 12a. AI Search Optimization (AISO) 평가 기준
+
+AI 검색 엔진 (ChatGPT, Perplexity, Google AI Overview)이 글을 인용할 때 좋아하는 패턴:
+- ✅ Quick Answer를 첫 2~3문단 안에 명시 (직접 답변형)
+- ✅ 단일 사실 한 문장 (citable atomic facts): "Black tea brews at 200°F (93°C) for 3-5 minutes."
+- ✅ 숫자/측정/비율 풍부
+- ✅ 카테고리 비교 명확 ("Hot brew extracts deeper flavor; cold brew preserves sweetness.")
+- ✅ FAQPage + Article JSON-LD 둘 다 본문 인라인
+- ✅ Hub 패턴 anchor IDs (H2마다 id 부여)
+- ❌ 모호한 도입 ("There are several factors...") 감점
+- ❌ "It depends on..." 식 조건부 답변 감점
+
+### 12b. E-E-A-T (Experience / Expertise / Authoritativeness / Trustworthiness)
+
+Google quality raters guideline의 4대 신호:
+- **Experience** — 실제 경험 반영. "I tested 5 different beans" / "After 30 days of drinking..." 같은 직접 경험 신호 (자동화 글이지만 톤은 first-hand experience 톤 유지)
+- **Expertise** — 구체적이고 정확한 데이터 (brewing temp, time, ratio 등). 모호한 "보통" / "대체로" 회피
+- **Authoritativeness** — 브랜드 정체성 일관성 (publisher 명시), JSON-LD Article schema, 일관된 author
+- **Trustworthiness** — 사실 오류 없음 (예: 잘못된 카페인 함량, 잘못된 brewing 정보), 모순된 진술 없음, 광고성 과장 없음
+
 
 ## 14. 페이지 전체 감점 (본문 외, 분리 판단)
 
@@ -136,7 +160,12 @@ FAQ 직후 본문 HTML 인라인:
 </script>
 ```
 
-## 14c. 첫 패스 10/10 표준 (17개 자가 점검)
+## 14c. 첫 패스 10/10 표준 (5 dimension × 자가 점검)
+
+이제 평가는 **5 dimension × 10/10** = 모든 차원 10점 만족.
+
+(이전 17개 체크리스트는 구조/SEO/전환 3차원의 세부 항목. AISO와 E-E-A-T는 위 12a/12b 기준 추가 평가.)
+
 
 **구조 (10)**
 1. H1 없음
