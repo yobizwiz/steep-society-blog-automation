@@ -4,11 +4,14 @@ from utils import load_system_prompt, load_few_shot_articles, log
 
 
 def min_score(article):
+    """Min score across 5 dimensions: content / SEO / conversion / AISO / E-E-A-T."""
     j = article.get("internal_judgment", {}) or {}
     scores = [
         (j.get("content_quality") or {}).get("score", 0),
         (j.get("onpage_seo") or {}).get("score", 0),
         (j.get("conversion_alignment") or {}).get("score", 0),
+        (j.get("ai_search_optimization") or {}).get("score", 0),
+        (j.get("eeat") or {}).get("score", 0),
     ]
     try:
         return min(int(s) for s in scores)
@@ -20,8 +23,8 @@ PERFECTION_SYS = (
     "You are doing a final perfectionist pass on a Steep Society article. "
     "The previous draft scored below 10/10 on at least one dimension. Your job: "
     "identify EVERY remaining weakness - even minor ones - and produce a version "
-    "that genuinely earns 10/10 on content quality, on-page SEO, and conversion "
-    "alignment.\n\n"
+    "that genuinely earns 10/10 on ALL FIVE dimensions: content quality, on-page SEO, "
+    "conversion alignment, AI search optimization (AISO), and E-E-A-T.\n\n"
     "Strict rules:\n"
     "- Do NOT inflate scores. Only return 10 if genuinely no improvement possible.\n"
     "- If you find a weakness, FIX it in the body, then update the score.\n"
