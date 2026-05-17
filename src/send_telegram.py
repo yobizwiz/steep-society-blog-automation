@@ -76,14 +76,27 @@ def render_day(s, article):
     cq = (j.get("content_quality") or {}).get("score", "?")
     seo = (j.get("onpage_seo") or {}).get("score", "?")
     conv = (j.get("conversion_alignment") or {}).get("score", "?")
+    # Gemini cross-validation scores (Pass 4b)
+    gem = j.get("gemini_review") or {}
+    g_cq = (gem.get("content_quality") or {}).get("score", None)
+    g_seo = (gem.get("onpage_seo") or {}).get("score", None)
+    g_conv = (gem.get("conversion_alignment") or {}).get("score", None)
     admin_url = s.get("admin_url") or ""
 
-    return (
+    out = (
         f"\n📅 <b>{esc(date)}</b>\n"
         f"<b>{esc(title[:80])}</b>\n"
-        f"콘텐츠 <b>{esc(cq)}/10</b> · SEO <b>{esc(seo)}/10</b> · 전환 <b>{esc(conv)}/10</b>\n"
-        + (f'🔗 <a href="{esc(admin_url)}">Shopify 관리자</a>\n' if admin_url else "")
+        f"<i>Anthropic:</i> 콘텐츠 <b>{esc(cq)}/10</b> · SEO <b>{esc(seo)}/10</b> · 전환 <b>{esc(conv)}/10</b>\n"
     )
+    if g_cq is not None or g_seo is not None or g_conv is not None:
+        out += (
+            f"<i>Gemini:</i> 콘텐츠 <b>{esc(g_cq if g_cq is not None else '?')}/10</b> · "
+            f"SEO <b>{esc(g_seo if g_seo is not None else '?')}/10</b> · "
+            f"전환 <b>{esc(g_conv if g_conv is not None else '?')}/10</b>\n"
+        )
+    if admin_url:
+        out += f'🔗 <a href="{esc(admin_url)}">Shopify 관리자</a>\n'
+    return out
 
 
 def split_messages(header, day_blocks, footer=""):
