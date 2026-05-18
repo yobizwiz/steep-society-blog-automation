@@ -2,7 +2,6 @@ name: Review & Upgrade Existing Articles
 
 on:
   schedule:
-    # 매시간 정각+5분 — Shopify metafield로 처리 여부 추적 (cursor 파일 불필요)
     - cron: '5 * * * *'
   workflow_dispatch:
     inputs:
@@ -13,6 +12,9 @@ on:
         description: 'Articles per batch (default 15)'
         required: false
         default: '15'
+
+permissions:
+  contents: write
 
 jobs:
   upgrade:
@@ -53,6 +55,23 @@ jobs:
           BLOG_HANDLE="${{ github.event.inputs.blog_handle || secrets.SHOPIFY_BLOG_HANDLE }}"
           BATCH_SIZE="${{ github.event.inputs.batch_size || '15' }}"
           python src/review_and_upgrade.py --blog_handle "$BLOG_HANDLE" --batch_size "$BATCH_SIZE" --max_time_min 80
+
+      - name: Commit cursor state to repo
+        if: always()
+        run: |
+          if [ -d state ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add state/ || true
+            if ! git diff --staged --quiet; then
+              git commit -m "ci: update review cursor [skip ci]"
+              git push
+            else
+              echo "no cursor changes to commit"
+            fi
+          else
+            echo "state/ folder not created"
+          fi
 
       - name: Upload batch report
         if: always()
