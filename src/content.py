@@ -281,7 +281,7 @@ def gemini_review(article, env):
             "parts": [{"text": user_msg}]
         }],
         "systemInstruction": {"parts": [{"text": GEMINI_REVIEW_SYSTEM}]},
-        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 1500}
+        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2000, "responseMimeType": "application/json"}
     }
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key={api_key}"
     last_err = None
@@ -320,20 +320,30 @@ def merge_gemini_into_judgment(article, gemini):
 
 
 def combined_min_score(article):
-    """Min across all reviewer models — Anthropic (5 scores) + Gemini (5 scores if present)."""
+    """Min across all reviewer models — Anthropic 5 + Gemini 5 (only if Gemini succeeded).
+    
+    KEY: if Gemini missing/empty, its scores are NOT counted as 0 — they are excluded.
+    Only valid integer scores enter the min."""
     DIMS = ("content_quality", "onpage_seo", "conversion_alignment",
             "ai_search_optimization", "eeat")
     j = article.get("internal_judgment", {}) or {}
     scores = []
     for k in DIMS:
-        v = (j.get(k) or {}).get("score", 0)
+        obj = j.get(k)
+        if not isinstance(obj, dict): continue
+        v = obj.get("score")
+        if v is None: continue
         try: scores.append(int(v))
         except (TypeError, ValueError): pass
-    gem = j.get("gemini_review") or {}
-    for k in DIMS:
-        v = (gem.get(k) or {}).get("score", 0)
-        try: scores.append(int(v))
-        except (TypeError, ValueError): pass
+    gem = j.get("gemini_review")
+    if isinstance(gem, dict):
+        for k in DIMS:
+            obj = gem.get(k)
+            if not isinstance(obj, dict): continue
+            v = obj.get("score")
+            if v is None: continue
+            try: scores.append(int(v))
+            except (TypeError, ValueError): pass
     return min(scores) if scores else 0
 
 
