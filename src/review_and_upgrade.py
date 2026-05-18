@@ -208,44 +208,66 @@ def process_one(article_info, env):
         return {"id": aid, "title": full.get("title","")[:50], "status": "already_10", 
                 "before": before_min, "after": before_min, "anthropic": anthropic_score, "gemini": article.get("internal_judgment",{}).get("gemini_review")}
     
-    # Upgrade with perfection_pass
+    # Upgrade with perfection_pass (Score Guard: never downgrade — keep original if perfection lowers score)
+    original_body = article["body_html"]
+    best_article = article  # start from original
+    best_min = before_min
+    
     try:
-        upgraded = perfection_pass(article, env)
-        # Re-validate with Gemini
-        try:
-            gem2 = gemini_review(upgraded, env)
-            if gem2:
-                upgraded = merge_gemini_into_judgment(upgraded, gem2)
-        except Exception:
-            pass
-        after_min = combined_min_score(upgraded)
-        log(f"  After perfection min: {after_min}/10")
-        
-        # If still not 10, try once more
-        if after_min < 10:
+        for attempt in (1, 2):
             try:
-                upgraded2 = perfection_pass(upgraded, env)
-                try:
-                    gem3 = gemini_review(upgraded2, env)
-                    if gem3: upgraded2 = merge_gemini_into_judgment(upgraded2, gem3)
-                except Exception: pass
-                if combined_min_score(upgraded2) > after_min:
-                    upgraded = upgraded2
-                    after_min = combined_min_score(upgraded2)
-                    log(f"  After 2nd perfection: {after_min}/10")
+                cand = perfection_pass(best_article, env)
             except Exception as e:
-                log(f"  2nd perfection skip: {e}", "WARN")
+                log(f"  perfection attempt {attempt} fail: {e}", "WARN")
+                break
+            # Re-validate with Gemini
+            try:
+                gem_cand = gemini_review(cand, env)
+                if gem_cand:
+                    cand = merge_gemini_into_judgment(cand, gem_cand)
+            except Exception:
+                pass
+            cand_min = combined_min_score(cand)
+            log(f"  Perfection attempt {attempt}: {best_min} → {cand_min}")
+            
+            # SCORE GUARD: only adopt if cand_min > best_min
+            if cand_min > best_min:
+                best_article = cand
+                best_min = cand_min
+                log(f"  ✅ adopted (score improved)")
+                if best_min >= 10:
+                    break
+            else:
+                log(f"  ⏸ rejected (no improvement: {cand_min} <= {best_min})")
+                break  # if first attempt doesn't improve, second likely won't either
         
-        # Update Shopify body
-        new_body = upgraded.get("body_html","")
-        if new_body and new_body != article["body_html"]:
-            # Apply paragraph spacing (same as new articles)
+        after_min = best_min
+        
+        # Decide outcome
+        if best_min == before_min:
+            # No improvement — kept original
+            return {"id": aid, "title": full.get("title","")[:50], "status": "no_improvement",
+                    "before": before_min, "after": before_min,
+                    "anthropic": article.get("internal_judgment",{}),
+                    "gemini": article.get("internal_judgment",{}).get("gemini_review")}
+        
+        if best_min < before_min:
+            # Should not happen (we never adopt lower) — defensive
+            return {"id": aid, "title": full.get("title","")[:50], "status": "kept_original_guard",
+                    "before": before_min, "after": before_min,
+                    "anthropic": article.get("internal_judgment",{}),
+                    "gemini": article.get("internal_judgment",{}).get("gemini_review")}
+        
+        # Score improved — update Shopify
+        new_body = best_article.get("body_html","")
+        if new_body and new_body != original_body:
             from shopify_pub import _apply_paragraph_spacing
             new_body = _apply_paragraph_spacing(new_body)
             shopify_update_body(env, aid, new_body)
             return {"id": aid, "title": full.get("title","")[:50], "status": "upgraded",
-                    "before": before_min, "after": after_min, "anthropic": upgraded.get("internal_judgment",{}),
-                    "gemini": upgraded.get("internal_judgment",{}).get("gemini_review")}
+                    "before": before_min, "after": after_min,
+                    "anthropic": best_article.get("internal_judgment",{}),
+                    "gemini": best_article.get("internal_judgment",{}).get("gemini_review")}
         else:
             return {"id": aid, "title": full.get("title","")[:50], "status": "no_body_change",
                     "before": before_min, "after": after_min}
