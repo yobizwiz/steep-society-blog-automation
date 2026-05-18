@@ -74,14 +74,18 @@ def score_article(article, env):
 
 
 def shopify_fetch_all_articles(env, blog_handle):
-    """Fetch all articles in the given blog (paginated GraphQL)."""
+    """Fetch all articles in the given blog + their 'upgraded' metafield (paginated GraphQL).
+    Articles with custom.upgraded_v2 metafield set are considered already processed."""
     store = env["SHOPIFY_STORE_URL"]
     token = env["SHOPIFY_ADMIN_TOKEN"]
     out = []
     cursor = None
     while True:
         after = f', after: "{cursor}"' if cursor else ""
-        q = '{ articles(first: 100' + after + ') { edges { cursor node { id title handle blog { handle } } } pageInfo { hasNextPage } } }'
+        q = ('{ articles(first: 100' + after + ') { edges { cursor node { '
+             'id title handle blog { handle } '
+             'metafield(namespace: "custom", key: "upgraded_v2") { value } '
+             '} } pageInfo { hasNextPage } } }')
         req = urllib.request.Request(
             f"https://{store}/admin/api/2025-01/graphql.json",
             data=json.dumps({"query": q}).encode(),
@@ -93,12 +97,42 @@ def shopify_fetch_all_articles(env, blog_handle):
         for e in edges:
             n = e['node']
             if n['blog']['handle'] == blog_handle:
-                out.append({'id': n['id'].split('/')[-1], 'title': n['title'], 'handle': n['handle']})
+                meta_val = (n.get('metafield') or {}).get('value') if n.get('metafield') else None
+                out.append({
+                    'id': n['id'].split('/')[-1],
+                    'title': n['title'],
+                    'handle': n['handle'],
+                    'upgraded': bool(meta_val),
+                })
         if d['data']['articles']['pageInfo']['hasNextPage'] and edges:
             cursor = edges[-1]['cursor']
         else:
             break
     return out
+
+
+def shopify_set_upgraded_metafield(env, article_id, value):
+    """Mark article as upgraded via metafield custom.upgraded_v2."""
+    store = env["SHOPIFY_STORE_URL"]
+    token = env["SHOPIFY_ADMIN_TOKEN"]
+    url = f"https://{store}/admin/api/2025-01/articles/{article_id}/metafields.json"
+    payload = {"metafield": {
+        "namespace": "custom",
+        "key": "upgraded_v2",
+        "type": "single_line_text_field",
+        "value": value
+    }}
+    req = urllib.request.Request(url, method="POST",
+        data=json.dumps(payload).encode(),
+        headers={"X-Shopify-Access-Token": token, "Content-Type":"application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        # If already exists, try PUT update (need metafield id first)
+        if e.code == 422:
+            return None
+        raise
 
 
 def shopify_fetch_article_body(env, article_id):
@@ -236,30 +270,16 @@ def main():
     log(f"# Batch: {args.batch_size} articles, max {args.max_time_min} min")
     log("=" * 60)
     
-    # Load cursor
-    cursor_path = OUTPUT_DIR / f"upgrade-cursor-{args.blog_handle}.json"
-    cursor = {"processed_ids": [], "started_at": None, "all_articles": None}
-    if cursor_path.exists():
-        try:
-            cursor = json.loads(cursor_path.read_text())
-        except Exception:
-            pass
-    if cursor.get("started_at") is None:
-        cursor["started_at"] = _dt.datetime.utcnow().isoformat()
+    # Fetch all articles + metafield (persists across runs — no cursor file needed)
+    log("Fetching all articles in blog (with upgraded metafield)...")
+    all_arts = shopify_fetch_all_articles(env, args.blog_handle)
+    log(f"Total: {len(all_arts)} articles")
     
-    # Get all articles (cache in cursor)
-    if not cursor.get("all_articles"):
-        log("Fetching all articles in blog...")
-        all_arts = shopify_fetch_all_articles(env, args.blog_handle)
-        cursor["all_articles"] = all_arts
-        log(f"Total: {len(all_arts)} articles")
-    else:
-        all_arts = cursor["all_articles"]
+    already_upgraded = [a for a in all_arts if a.get("upgraded")]
+    remaining = [a for a in all_arts if not a.get("upgraded")]
+    processed_set = set(a["id"] for a in already_upgraded)
     
-    processed_set = set(cursor.get("processed_ids", []))
-    remaining = [a for a in all_arts if a["id"] not in processed_set]
-    
-    log(f"Total: {len(all_arts)}, processed: {len(processed_set)}, remaining: {len(remaining)}")
+    log(f"Already upgraded: {len(already_upgraded)}, remaining: {len(remaining)}")
     
     if not remaining:
         log("✅ All articles already processed!")
@@ -284,9 +304,12 @@ def main():
             r = {"id": art["id"], "title": art.get("title","")[:50], "status": "exception", "error": str(e)[:200]}
         results.append(r)
         processed_set.add(art["id"])
-        # Save cursor after each article (safe)
-        cursor["processed_ids"] = sorted(processed_set)
-        cursor_path.write_text(json.dumps(cursor, ensure_ascii=False, indent=2))
+        # Mark as upgraded in Shopify metafield (persists across runs)
+        try:
+            mark_value = _dt.datetime.utcnow().isoformat() + "Z|" + r.get("status","unknown")
+            shopify_set_upgraded_metafield(env, art["id"], mark_value[:255])
+        except Exception as e:
+            log(f"  metafield set failed: {e}", "WARN")
         time.sleep(1)
     
     # Summary
