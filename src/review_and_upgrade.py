@@ -394,6 +394,11 @@ def main():
         "results": results,
     }, indent=2, ensure_ascii=False))
     log(f"Report saved: {batch_path}")
+    
+    # Write remaining count to a file for workflow self-trigger
+    remain_count = len(all_arts) - len(processed_set)
+    (OUTPUT_DIR / "_remaining.txt").write_text(str(remain_count))
+    log(f"Remaining for self-trigger: {remain_count}")
 
 
 if __name__ == "__main__":
