@@ -277,6 +277,24 @@ def process_one(article_info, env):
         return {"id": aid, "title": full.get("title","")[:50], "status": "perfection_error", "error": str(e)[:200]}
 
 
+STATE_DIR = Path(__file__).resolve().parent.parent / "state"
+
+
+def load_cursor(blog_handle):
+    STATE_DIR.mkdir(exist_ok=True)
+    p = STATE_DIR / f"upgrade-cursor-{blog_handle}.json"
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except: pass
+    return {"processed_ids": [], "started_at": _dt.datetime.utcnow().isoformat()}
+
+
+def save_cursor(blog_handle, cursor):
+    STATE_DIR.mkdir(exist_ok=True)
+    p = STATE_DIR / f"upgrade-cursor-{blog_handle}.json"
+    p.write_text(json.dumps(cursor, ensure_ascii=False, indent=2))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--blog_handle", required=True, help="e.g. steep-society-journal or home-cafe-baking")
@@ -292,16 +310,18 @@ def main():
     log(f"# Batch: {args.batch_size} articles, max {args.max_time_min} min")
     log("=" * 60)
     
-    # Fetch all articles + metafield (persists across runs — no cursor file needed)
-    log("Fetching all articles in blog (with upgraded metafield)...")
+    # Cursor file persists across runs via repo commit (workflow yml commits state/ folder)
+    cursor = load_cursor(args.blog_handle)
+    processed_set = set(cursor.get("processed_ids", []))
+    log(f"Cursor loaded: {len(processed_set)} articles already processed")
+    
+    # Fetch all articles in blog
+    log("Fetching all articles in blog...")
     all_arts = shopify_fetch_all_articles(env, args.blog_handle)
-    log(f"Total: {len(all_arts)} articles")
+    log(f"Total in blog: {len(all_arts)} articles")
     
-    already_upgraded = [a for a in all_arts if a.get("upgraded")]
-    remaining = [a for a in all_arts if not a.get("upgraded")]
-    processed_set = set(a["id"] for a in already_upgraded)
-    
-    log(f"Already upgraded: {len(already_upgraded)}, remaining: {len(remaining)}")
+    remaining = [a for a in all_arts if a["id"] not in processed_set]
+    log(f"Remaining: {len(remaining)}")
     
     if not remaining:
         log("✅ All articles already processed!")
@@ -326,12 +346,9 @@ def main():
             r = {"id": art["id"], "title": art.get("title","")[:50], "status": "exception", "error": str(e)[:200]}
         results.append(r)
         processed_set.add(art["id"])
-        # Mark as upgraded in Shopify metafield (persists across runs)
-        try:
-            mark_value = _dt.datetime.utcnow().isoformat() + "Z|" + r.get("status","unknown")
-            shopify_set_upgraded_metafield(env, art["id"], mark_value[:255])
-        except Exception as e:
-            log(f"  metafield set failed: {e}", "WARN")
+        # Save cursor after each article (committed to repo by workflow)
+        cursor["processed_ids"] = sorted(processed_set)
+        save_cursor(args.blog_handle, cursor)
         time.sleep(1)
     
     # Summary
