@@ -57,18 +57,27 @@ jobs:
           BATCH_SIZE="${{ github.event.inputs.batch_size || '15' }}"
           python src/review_and_upgrade.py --blog_handle "$BLOG_HANDLE" --batch_size "$BATCH_SIZE" --max_time_min 80
 
-      - name: Commit cursor state to repo
+      - name: Commit cursor state to repo (with rebase to avoid push rejection)
         if: always()
         run: |
           if [ -d state ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add state/ || true
-            if ! git diff --staged --quiet; then
-              git commit -m "ci: update review cursor [skip ci]"
-              git push
-            else
+            if git diff --staged --quiet; then
               echo "no cursor changes to commit"
+            else
+              git commit -m "ci: update review cursor [skip ci]"
+              # Try push; if rejected (remote newer), pull --rebase and retry up to 3 times
+              for i in 1 2 3; do
+                if git push 2>&1; then
+                  echo "push succeeded on attempt $i"
+                  break
+                fi
+                echo "push failed on attempt $i — rebasing..."
+                git pull --rebase origin main || true
+                sleep 2
+              done
             fi
           else
             echo "state/ folder not created"
