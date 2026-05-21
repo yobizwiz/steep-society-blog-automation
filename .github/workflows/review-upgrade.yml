@@ -2,20 +2,23 @@ name: Review & Upgrade Existing Articles
 
 on:
   schedule:
-    - cron: '5 * * * *'
+    - cron: '15 * * * *'
   workflow_dispatch:
     inputs:
       blog_handle:
-        description: 'Blog handle (steep-society-journal or home-cafe-baking)'
+        description: 'Blog handle'
         required: true
       batch_size:
-        description: 'Articles per batch (default 15)'
+        description: 'Articles per batch'
         required: false
         default: '15'
 
 permissions:
   contents: write
-  actions: write
+
+concurrency:
+  group: review-upgrade
+  cancel-in-progress: false
 
 jobs:
   upgrade:
@@ -24,15 +27,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
       - name: Create api-keys.txt
         run: |
           cat > api-keys.txt <<'EOF'
@@ -47,7 +47,6 @@ jobs:
           PUBLISH_MODE=${{ secrets.PUBLISH_MODE }}
           IMAGE_VARIANTS_PER_SLOT=${{ secrets.IMAGE_VARIANTS_PER_SLOT }}
           EOF
-
       - name: Run review + upgrade batch
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -56,8 +55,7 @@ jobs:
           BLOG_HANDLE="${{ github.event.inputs.blog_handle || secrets.SHOPIFY_BLOG_HANDLE }}"
           BATCH_SIZE="${{ github.event.inputs.batch_size || '15' }}"
           python src/review_and_upgrade.py --blog_handle "$BLOG_HANDLE" --batch_size "$BATCH_SIZE" --max_time_min 80
-
-      - name: Commit cursor state to repo (with rebase to avoid push rejection)
+      - name: Commit cursor state
         if: always()
         run: |
           if [ -d state ]; then
@@ -65,43 +63,16 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add state/ || true
             if git diff --staged --quiet; then
-              echo "no cursor changes to commit"
+              echo "no changes"
             else
               git commit -m "ci: update review cursor [skip ci]"
-              # Try push; if rejected (remote newer), pull --rebase and retry up to 3 times
               for i in 1 2 3; do
-                if git push 2>&1; then
-                  echo "push succeeded on attempt $i"
-                  break
-                fi
-                echo "push failed on attempt $i — rebasing..."
+                if git push; then break; fi
                 git pull --rebase origin main || true
                 sleep 2
               done
             fi
-          else
-            echo "state/ folder not created"
           fi
-
-      - name: Self-trigger next batch if remaining > 0
-        if: success()
-        run: |
-          REMAIN=$(cat output/_remaining.txt 2>/dev/null || echo 0)
-          echo "Remaining articles: $REMAIN"
-          if [ "$REMAIN" -gt 0 ]; then
-            BLOG_HANDLE="${{ github.event.inputs.blog_handle || secrets.SHOPIFY_BLOG_HANDLE }}"
-            BATCH_SIZE="${{ github.event.inputs.batch_size || '15' }}"
-            echo "Triggering next batch (handle=$BLOG_HANDLE, size=$BATCH_SIZE)"
-            curl -s -X POST -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
-              -H "Accept: application/vnd.github+json" \
-              -H "Content-Type: application/json" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/workflows/review-upgrade.yml/dispatches" \
-              -d "{\"ref\":\"main\",\"inputs\":{\"blog_handle\":\"$BLOG_HANDLE\",\"batch_size\":\"$BATCH_SIZE\"}}"
-            echo "next batch dispatched"
-          else
-            echo "🎉 All articles processed — no self-trigger needed"
-          fi
-
       - name: Upload batch report
         if: always()
         uses: actions/upload-artifact@v4
