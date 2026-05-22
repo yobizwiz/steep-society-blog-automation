@@ -23,6 +23,11 @@ from content import (gemini_review, merge_gemini_into_judgment, combined_min_sco
                      OUTPUT_SCHEMA_INSTRUCTION)
 from utils import load_system_prompt, load_few_shot_articles
 from perfection import perfection_pass
+from content import generate_full_article, _claude_call, _extract_json
+from images import generate_image_for_slot
+from shopify_pub import (get_blog_id, upload_image, insert_body_images,
+                          _apply_paragraph_spacing)
+from utils import load_yaml, CONFIG_DIR
 import urllib.request
 
 CURSOR_FILE = OUTPUT_DIR / "upgrade-cursor.json"
@@ -171,6 +176,108 @@ def telegram_send(env, text):
         log(f"[telegram] send failed: {e}", "WARN")
 
 
+def _guess_collection(title, env):
+    """Use Claude to pick the best-matching collection for an article title."""
+    try:
+        cols = load_yaml(CONFIG_DIR / "collections.yaml")
+    except Exception:
+        return None
+    options = "\n".join(f"- {h}: {info.get('title','')}" for h, info in cols.items())
+    prompt = (
+        f"Article title: \"{title}\"\n\n"
+        f"Available collections:\n{options}\n\n"
+        "Pick the SINGLE best-matching collection for this article's CTA. "
+        "Reply with ONLY the handle (e.g. 'tea_gift_sets_samplers'), nothing else."
+    )
+    try:
+        raw = _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
+                           system="You match blog articles to the best Shopify collection. Reply with only the handle.",
+                           messages=[{"role":"user","content":prompt}], max_tokens=50, temperature=0)
+        handle = raw.strip().split()[0].strip().strip("\"'`")
+        if handle in cols:
+            return cols[handle]
+    except Exception as e:
+        log(f"  collection guess fail: {e}", "WARN")
+    # fallback: first collection
+    return list(cols.values())[0] if cols else None
+
+
+def regenerate_article(article_info, env, before_min, before_article):
+    """Full regeneration fallback: rewrite article from scratch + new images.
+    Keeps handle (URL) + scheduled date. Score guard: only replace if better."""
+    aid = article_info["id"]
+    title = before_article.get("title","")
+    log(f"  🔄 FULL REGENERATION: {title[:50]}")
+    
+    # Guess collection for CTA
+    cta = _guess_collection(title, env)
+    if not cta:
+        log("  no collection — skip regen", "WARN")
+        return None
+    
+    # Determine post type from title
+    t = title.lower()
+    post_type = "hub" if "hub" in t else ("quickfix" if ("quick fix" in t or t.endswith("?")) else "longtail")
+    
+    # Generate fresh article (multi-pass + 5 dim + Gemini inside generate_full_article)
+    import datetime as _dt2
+    today = _dt2.datetime.utcnow().strftime("%Y-%m-%d")
+    new_article = generate_full_article(topic=title, date=today, post_type=post_type,
+                                         subtype=None, cta=cta)
+    new_min = combined_min_score(new_article)
+    log(f"  Regenerated article min: {new_min}/10 (was {before_min})")
+    
+    if new_min <= before_min:
+        log(f"  ⏸ regen no better ({new_min} <= {before_min}) — keep original", "WARN")
+        return None
+    
+    # Generate images
+    google_key = env["GOOGLE_API_KEY"]
+    imagen_model = env.get("IMAGEN_MODEL", "imagen-4.0-generate-001")
+    variants = int(env.get("IMAGE_VARIANTS_PER_SLOT", "1"))
+    generated = []
+    for img in new_article.get("images", []):
+        try:
+            r = generate_image_for_slot(prompt=img["prompt"], filename_base=img["filename"],
+                                         api_key=google_key, model=imagen_model, variants=variants,
+                                         aspect_ratio="16:9", anthropic_key=env["ANTHROPIC_API_KEY"],
+                                         max_vision_retries=2)
+            generated.append({**img, **r})
+        except Exception as e:
+            log(f"  image gen fail ({img.get('filename')}): {e}", "WARN")
+    
+    featured = next((g for g in generated if g.get("role") == "featured"), None)
+    body_imgs = [g for g in generated if g.get("role") == "body"]
+    
+    feat_url = None
+    if featured:
+        feat_url = upload_image(env, webp_bytes=featured["webp_bytes"],
+                                 filename=featured["filename"], alt=featured["alt"])
+    body_uploaded = []
+    for bi in body_imgs:
+        url = upload_image(env, webp_bytes=bi["webp_bytes"], filename=bi["filename"], alt=bi["alt"])
+        body_uploaded.append({"url": url, "alt": bi["alt"], "filename": bi["filename"]})
+    
+    body_with_imgs = insert_body_images(new_article["body_html"], body_uploaded)
+    body_with_imgs = _apply_paragraph_spacing(body_with_imgs)
+    
+    # Update existing article (keep handle/date) via REST
+    store = env["SHOPIFY_STORE_URL"]; token = env["SHOPIFY_ADMIN_TOKEN"]
+    payload = {"article": {"id": int(aid), "body_html": body_with_imgs}}
+    if feat_url:
+        payload["article"]["image"] = {"src": feat_url, "alt": featured["alt"]}
+    req = urllib.request.Request(f"https://{store}/admin/api/2025-01/articles/{aid}.json",
+        method="PUT", data=json.dumps(payload).encode(),
+        headers={"X-Shopify-Access-Token": token, "Content-Type":"application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        json.loads(r.read())
+    log(f"  ✅ regenerated + updated (min {before_min} → {new_min})")
+    return {"id": aid, "title": title[:50], "status": "regenerated",
+            "before": before_min, "after": new_min,
+            "anthropic": new_article.get("internal_judgment",{}),
+            "gemini": new_article.get("internal_judgment",{}).get("gemini_review")}
+
+
 def process_one(article_info, env):
     """Score → upgrade if needed → update Shopify."""
     aid = article_info['id']
@@ -244,12 +351,24 @@ def process_one(article_info, env):
         after_min = best_min
         
         # Decide outcome
-        if best_min == before_min:
-            # No improvement — kept original
+        if best_min == before_min and before_min < 10:
+            # Perfection couldn't improve — try FULL REGENERATION fallback
+            log(f"  perfection stuck at {before_min} — attempting full regeneration")
+            try:
+                regen_result = regenerate_article(article_info, env, before_min, article)
+                if regen_result:
+                    return regen_result
+            except Exception as e:
+                log(f"  regeneration failed: {e}", "WARN")
+                import traceback; traceback.print_exc()
+            # Regen didn't help either — keep original
             return {"id": aid, "title": full.get("title","")[:50], "status": "no_improvement",
                     "before": before_min, "after": before_min,
                     "anthropic": article.get("internal_judgment",{}),
                     "gemini": article.get("internal_judgment",{}).get("gemini_review")}
+        if best_min == before_min:
+            return {"id": aid, "title": full.get("title","")[:50], "status": "already_max",
+                    "before": before_min, "after": before_min}
         
         if best_min < before_min:
             # Should not happen (we never adopt lower) — defensive
