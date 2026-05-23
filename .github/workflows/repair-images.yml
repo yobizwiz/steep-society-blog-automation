@@ -1,15 +1,19 @@
 name: Repair Body Images
 
 # 업그레이드 버그로 본문 사진이 빠진 글들을 복구한다.
-# 수동 실행 전용. idempotent — 매번 아직 깨진 글만 처리하므로 "남은=0" 될 때까지 반복 실행.
+# 자동 분산 재개: 작은 배치를 띄엄띄엄 돌려 Imagen rate limit(429)을 회피.
+# idempotent — 매번 아직 깨진 글만 처리. 남은=0 되면 아무것도 안 함(무해).
+# 복구 완료 후 schedule 블록은 제거 예정.
 
 on:
+  schedule:
+    - cron: '5,35 * * * *'
   workflow_dispatch:
     inputs:
       limit:
-        description: '이번 실행에서 복구할 최대 글 수 (타임아웃 회피용 배치)'
+        description: '이번 실행에서 복구할 최대 글 수'
         required: false
-        default: '20'
+        default: '8'
       dry_run:
         description: 'true면 복구 안 하고 깨진 글만 집계'
         required: false
@@ -22,19 +26,16 @@ concurrency:
 jobs:
   repair:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
       - name: Create api-keys.txt from secrets
         run: |
           cat > api-keys.txt <<'EOF'
@@ -48,11 +49,12 @@ jobs:
           SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
           IMAGE_VARIANTS_PER_SLOT=${{ secrets.IMAGE_VARIANTS_PER_SLOT }}
           EOF
-
       - name: Run repair
         run: |
+          LIMIT="${{ github.event.inputs.limit }}"
+          if [ -z "$LIMIT" ]; then LIMIT=8; fi
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             python src/repair_images.py --dry-run
           else
-            python src/repair_images.py --limit "${{ github.event.inputs.limit }}"
+            python src/repair_images.py --limit "$LIMIT"
           fi
