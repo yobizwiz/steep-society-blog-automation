@@ -1,0 +1,58 @@
+name: Repair Body Images
+
+# 업그레이드 버그로 본문 사진이 빠진 글들을 복구한다.
+# 수동 실행 전용. idempotent — 매번 아직 깨진 글만 처리하므로 "남은=0" 될 때까지 반복 실행.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: '이번 실행에서 복구할 최대 글 수 (타임아웃 회피용 배치)'
+        required: false
+        default: '20'
+      dry_run:
+        description: 'true면 복구 안 하고 깨진 글만 집계'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: repair-images-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create api-keys.txt from secrets
+        run: |
+          cat > api-keys.txt <<'EOF'
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL=${{ secrets.ANTHROPIC_MODEL }}
+          ANTHROPIC_REVIEW_MODEL=${{ secrets.ANTHROPIC_REVIEW_MODEL }}
+          GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+          IMAGEN_MODEL=${{ secrets.IMAGEN_MODEL }}
+          SHOPIFY_STORE_URL=${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
+          IMAGE_VARIANTS_PER_SLOT=${{ secrets.IMAGE_VARIANTS_PER_SLOT }}
+          EOF
+
+      - name: Run repair
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            python src/repair_images.py --dry-run
+          else
+            python src/repair_images.py --limit "${{ github.event.inputs.limit }}"
+          fi
