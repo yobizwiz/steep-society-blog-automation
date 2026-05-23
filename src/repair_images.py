@@ -190,12 +190,12 @@ def main():
     log(f"전체 {len(arts)}편 / 깨진(본문0+placeholder) {len(broken)}편")
 
     if args.dry_run:
-        for a in sorted(broken, key=lambda x: x.get("published_at", "")):
+        for a in sorted(broken, key=lambda x: (x.get("published_at") or "")):
             log(f"  BROKEN {a.get('published_at','')[:10]} slots={len(placeholders(a['body_html']))} {a.get('title','')[:45]}")
         print(json.dumps({"total": len(arts), "broken": len(broken)}, ensure_ascii=False))
         return
 
-    todo = sorted(broken, key=lambda x: x.get("published_at", ""))[:args.limit]
+    todo = sorted(broken, key=lambda x: (x.get("published_at") or ""))[:args.limit]
     results = []
     for a in todo:
         try:
@@ -214,4 +214,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+   
