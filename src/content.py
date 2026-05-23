@@ -193,7 +193,7 @@ def self_critique(draft, env):
     def _call():
         return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
                           system=CRITIQUE_SYSTEM, messages=[{"role": "user", "content": user_msg}],
-                          max_tokens=4000, temperature=0.3)
+                          max_tokens=8000, temperature=0.3)
     crit = _call_and_parse_with_retry(label="[Pass 2]", max_attempts=3, call_fn=_call)
     n = sum(len(crit.get(k, [])) for k in ("content_weaknesses", "seo_weaknesses", "conversion_weaknesses", "structure_violations"))
     log("[Pass 2] critique done - " + str(n) + " issues")
