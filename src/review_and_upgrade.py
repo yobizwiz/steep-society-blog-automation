@@ -381,6 +381,17 @@ def process_one(article_info, env):
         new_body = best_article.get("body_html","")
         if new_body and new_body != original_body:
             from shopify_pub import _apply_paragraph_spacing
+            # BUGFIX: perfection re-emits <!-- IMG:body-N --> placeholders. Fill them with
+            # real images before writing, and NEVER write a body that still has placeholders.
+            import re as _re
+            if _re.search(r"<!--\s*IMG:body-\d+\s*-->", new_body, _re.I):
+                try:
+                    from repair_images import fill_body_placeholders
+                    new_body = fill_body_placeholders(env, new_body, best_article.get("title", full.get("title","")))
+                except Exception as e:
+                    log(f"  image fill failed ({e}) - keep original, skip write", "WARN")
+                    return {"id": aid, "title": full.get("title","")[:50], "status": "kept_original_image_fill_failed",
+                            "before": before_min, "after": before_min}
             new_body = _apply_paragraph_spacing(new_body)
             shopify_update_body(env, aid, new_body)
             return {"id": aid, "title": full.get("title","")[:50], "status": "upgraded",
