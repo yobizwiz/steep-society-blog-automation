@@ -185,6 +185,21 @@ def _fallback_prompt(filename_base):
     )
 
 
+
+# === Steep Society 이미지 톤 (사용자 수동 사진 분위기에 맞춤) ===
+# 실제 카메라로 찍은 에디토리얼 푸드 포토 느낌: 자연광, 차분한 어스/뉴트럴 톤,
+# 사실적 질감(렌더/과채도/광택 X), 미니멀 탑다운 플랫레이, 진짜 소품, 여백.
+STEEP_STYLE_SUFFIX = (
+    " Shot as authentic editorial food photography on a real camera (35mm film look), "
+    "soft natural window light with gentle realistic shadows, calm muted earthy and neutral "
+    "color palette (slightly desaturated, true to life), photorealistic natural textures with "
+    "subtle film grain, NObright glossy CGI render, no oversaturation, no harsh studio glare, "
+    "clean minimal overhead flat-lay composition with generous negative space, real tactile props "
+    "such as natural linen, dried botanicals, bamboo, ceramic, on a light neutral stone/linen or "
+    "warm rustic wood surface, understated cozy lifestyle mood, magazine-quality but unstaged and natural."
+).replace("NObright","no bright")
+
+
 def generate_image_for_slot(*, prompt, filename_base, api_key, model,
                               variants=1, aspect_ratio="16:9",
                               anthropic_key=None, max_vision_retries=2):
@@ -193,7 +208,7 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
     log(f"  이미지 생성 ({variants}장): {clean_name}")
 
     # Step 1: sanitize prompt to remove person references (Imagen safety filter)
-    safe_prompt = sanitize_image_prompt(prompt)
+    safe_prompt = sanitize_image_prompt(prompt) + STEEP_STYLE_SUFFIX
 
     last_webp = None
     last_png = None
