@@ -85,6 +85,9 @@ def generate_imagen(prompt, *, api_key, model="imagen-4.0-generate-001",
             if e.code in (400, 401, 403):
                 raise RuntimeError(f"Imagen API {last_err}")
             if e.code == 429:
+                if ("per_day" in body_text.lower() or "requests_per_day" in body_text.lower()
+                        or "perday" in body_text.lower() or "PerDay" in body_text):
+                    raise RuntimeError("DAILY_QUOTA_EXHAUSTED: " + body_text[:160])
                 retry_after = 0
                 try:
                     retry_after = int(e.headers.get("Retry-After", "0") or "0")
