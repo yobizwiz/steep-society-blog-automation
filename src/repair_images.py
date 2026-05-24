@@ -197,10 +197,16 @@ def main():
 
     todo = sorted(broken, key=lambda x: (x.get("published_at") or ""))[:args.limit]
     results = []
+    quota_done = False
     for a in todo:
         try:
             res = repair_one(env, a)
         except Exception as e:
+            if "DAILY_QUOTA_EXHAUSTED" in str(e):
+                log("일일 Imagen 할당량 소진 — 이번 실행 종료(다음 리셋 후 자동 재개)", "WARN")
+                results.append({"id": a["id"], "title": a.get("title", "")[:50], "status": "quota_exhausted"})
+                quota_done = True
+                break
             import traceback; traceback.print_exc()
             res = {"id": a["id"], "title": a.get("title", "")[:50], "status": "error", "error": str(e)[:200]}
         log(f"  -> {res['status']}")
