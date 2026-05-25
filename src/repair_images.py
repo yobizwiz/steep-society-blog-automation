@@ -83,6 +83,7 @@ SPEC_INSTRUCTION = """You are generating BODY IMAGE specifications for an existi
 already-written blog article. The article body has {n} image placeholder slot(s) that
 need images. Produce EXACTLY {n} image spec(s), one per slot, in reading order.
 
+Vary the camera ANGLE across the {n} images so the article is NOT all the same shot: for multiple images use a mix such as one overhead flat-lay (top-down), one three-quarter 45-degree angle shot, and one straight-on close-up. State the chosen camera angle explicitly at the start of each prompt. 
 Follow the image tone/style rules from the system prompt above EXACTLY (brand tone,
 still-life / product / scene only). ABSOLUTE RULE: no people or body parts of any kind
 (no person, hand, finger, face, mom, family, etc.) — describe objects, food/tea, props,
