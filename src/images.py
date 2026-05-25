@@ -199,7 +199,7 @@ STEEP_STYLE_SUFFIX = (
     "subtle film grain, NObright glossy CGI render, no oversaturation, no harsh studio glare, "
     "thoughtfully composed with generous negative space, real tactile props "
     "such as natural linen, dried botanicals, bamboo, ceramic, on a light neutral stone/linen or "
-    "warm rustic wood surface, understated cozy lifestyle mood, magazine-quality but unstaged and natural."
+    "warm rustic wood surface, often set within a real lived-in home scene (a kitchen dining table, a living-room side table, a sunlit windowsill) with softly blurred background and gentle bokeh for a sense of place, shallow depth of field — not always a tight flat macro close-up; understated cozy lifestyle mood, magazine-quality but unstaged and natural."
 ).replace("NObright","no bright")
 
 
