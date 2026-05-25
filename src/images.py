@@ -197,7 +197,7 @@ STEEP_STYLE_SUFFIX = (
     "soft natural window light with gentle realistic shadows, calm muted earthy and neutral "
     "color palette (slightly desaturated, true to life), photorealistic natural textures with "
     "subtle film grain, NObright glossy CGI render, no oversaturation, no harsh studio glare, "
-    "clean minimal overhead flat-lay composition with generous negative space, real tactile props "
+    "thoughtfully composed with generous negative space, real tactile props "
     "such as natural linen, dried botanicals, bamboo, ceramic, on a light neutral stone/linen or "
     "warm rustic wood surface, understated cozy lifestyle mood, magazine-quality but unstaged and natural."
 ).replace("NObright","no bright")
