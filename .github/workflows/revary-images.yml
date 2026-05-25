@@ -1,0 +1,58 @@
+name: Re-vary Body Images
+
+# 항공샷 위주로 복구됐던 옛날글 사진을 다양한 컨셉/각도로 교체(다운타임 없음).
+# idempotent(마커), 작은 배치 분산. 복구(repair) 끝난 뒤 활성화.
+
+on:
+  schedule:
+    - cron: '10,40 * * * *'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: '이번 실행 최대 글 수'
+        required: false
+        default: '8'
+      dry_run:
+        description: 'true면 대상만 집계'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: revary-images-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  revary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Create api-keys.txt from secrets
+        run: |
+          cat > api-keys.txt <<'EOF'
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL=${{ secrets.ANTHROPIC_MODEL }}
+          ANTHROPIC_REVIEW_MODEL=${{ secrets.ANTHROPIC_REVIEW_MODEL }}
+          GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+          IMAGEN_MODEL=${{ secrets.IMAGEN_MODEL }}
+          SHOPIFY_STORE_URL=${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
+          IMAGE_VARIANTS_PER_SLOT=${{ secrets.IMAGE_VARIANTS_PER_SLOT }}
+          EOF
+      - name: Run revary
+        run: |
+          LIMIT="${{ github.event.inputs.limit }}"
+          if [ -z "$LIMIT" ]; then LIMIT=8; fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            python src/revary_images.py --dry-run
+          else
+            python src/revary_images.py --limit "$LIMIT"
+          fi
