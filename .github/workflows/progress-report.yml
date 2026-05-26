@@ -1,0 +1,37 @@
+name: Daily Repair Progress Report
+
+# 매일 아침 사진 복구 진행 상황을 텔레그램으로 보고.
+# 사진 복구가 끝나면 워크플로 자체를 비활성화 예정.
+
+on:
+  schedule:
+    # 매일 12:00 UTC = 08:00 EDT (사용자 아침)
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Create api-keys.txt from secrets
+        run: |
+          cat > api-keys.txt <<'EOF'
+          SHOPIFY_STORE_URL=${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          EOF
+      - name: Send progress report
+        env:
+          SHOP_NAME: Steep Society
+        run: python src/send_progress_telegram.py
