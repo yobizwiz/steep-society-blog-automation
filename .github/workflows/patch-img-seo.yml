@@ -1,0 +1,30 @@
+name: Patch Body Image SEO Tags (One-shot)
+
+# 기존 본문 <img> 태그에 SEO 속성 추가 (width/height/decoding/srcset/sizes/title).
+# 이미지 새로 안 만들고 HTML만 다시 씀. idempotent — 이미 새 형식인 글은 건너뜀.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Create api-keys.txt from secrets
+        run: |
+          cat > api-keys.txt <<'EOF'
+          SHOPIFY_STORE_URL=${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
+          EOF
+      - name: Run patch
+        run: python src/patch_img_seo.py
