@@ -261,6 +261,44 @@ def generate_gemini_image(prompt, *, api_key, model="gemini-3.1-flash-image-prev
     raise RuntimeError(f"Gemini Image 재시도 모두 실패: {last_err}")
 
 
+
+def enhance_prompt_with_gemini_pro(prompt, *, api_key, model="gemini-2.5-pro"):
+    """Send the photographer-style brief to Gemini Pro for refinement into a richer
+    image-generation prompt (mimics how the Gemini chat app silently enhances prompts
+    before calling Nano Banana). Returns enhanced prompt string, falls back to original
+    on any error so image gen still proceeds."""
+    sys_inst = (
+        "You are a senior food/lifestyle photography art director. Rewrite the user's "
+        "image brief into a single dense, evocative prompt for an AI image generator. "
+        "Add concrete details: camera angle, lens feel, lighting direction and quality, "
+        "color palette, surface materials, props, depth of field, mood. Keep the original "
+        "subject and brand-tone constraints (no people, natural light, photorealistic, "
+        "lifestyle setting, varied scene/angle). Output ONLY the improved prompt as a "
+        "single paragraph — no preamble, no quotes, no explanations."
+    )
+    url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+           f"{model}:generateContent?key={api_key}")
+    body = json.dumps({
+        "systemInstruction": {"parts": [{"text": sys_inst}]},
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 600},
+    }).encode("utf-8")
+    try:
+        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+        for cand in data.get("candidates", []):
+            for part in cand.get("content", {}).get("parts", []):
+                t = part.get("text") or ""
+                t = t.strip()
+                if t:
+                    log("  Pro 프롬프트 다듬기 완료")
+                    return t
+    except Exception as e:
+        log(f"  Pro 다듬기 실패 ({e}) — 원본 프롬프트 사용", "WARN")
+    return prompt
+
+
 def generate_image_for_slot(*, prompt, filename_base, api_key, model,
                               variants=1, aspect_ratio="16:9",
                               anthropic_key=None, max_vision_retries=2):
@@ -269,7 +307,12 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
     log(f"  이미지 생성 ({variants}장): {clean_name}")
 
     # Step 1: sanitize prompt to remove person references (Imagen safety filter)
-    safe_prompt = sanitize_image_prompt(prompt) + STEEP_STYLE_SUFFIX
+    safe_prompt = sanitize_image_prompt(prompt)
+    # Step 1b: Gemini Pro pre-rewrites the prompt to a richer photographer-style brief
+    # (mimics what the Gemini chat app silently does before image gen — closes most of
+    # the quality gap between API-direct calls and chat-app results).
+    if anthropic_key and api_key:  # api_key here is the Google key for both Pro and Nano Banana
+        safe_prompt = enhance_prompt_with_gemini_pro(safe_prompt, api_key=api_key) + STEEP_STYLE_SUFFIX
 
     last_webp = None
     last_png = None
