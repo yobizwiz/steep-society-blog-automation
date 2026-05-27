@@ -313,11 +313,6 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
 
     # Step 1: sanitize prompt to remove person references (Imagen safety filter)
     safe_prompt = sanitize_image_prompt(prompt)
-    # Step 1b: Gemini Pro pre-rewrites the prompt to a richer photographer-style brief
-    # (mimics what the Gemini chat app silently does before image gen — closes most of
-    # the quality gap between API-direct calls and chat-app results).
-    if anthropic_key and api_key:  # api_key here is the Google key for both Pro and Nano Banana
-        safe_prompt = enhance_prompt_with_gemini_pro(safe_prompt, api_key=api_key)
     safe_prompt = safe_prompt + STEEP_STYLE_SUFFIX
 
     last_webp = None
