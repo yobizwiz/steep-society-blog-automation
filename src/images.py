@@ -262,7 +262,7 @@ def generate_gemini_image(prompt, *, api_key, model="gemini-3.1-flash-image-prev
 
 
 
-def enhance_prompt_with_gemini_pro(prompt, *, api_key, model="gemini-pro-latest"):
+def enhance_prompt_with_gemini_pro(prompt, *, api_key, model="gemini-2.5-flash"):
     log(f"  Pro 다듬기 시작 (model={model})")
     """Send the photographer-style brief to Gemini Pro for refinement into a richer
     image-generation prompt (mimics how the Gemini chat app silently enhances prompts
@@ -282,19 +282,23 @@ def enhance_prompt_with_gemini_pro(prompt, *, api_key, model="gemini-pro-latest"
     body = json.dumps({
         "systemInstruction": {"parts": [{"text": sys_inst}]},
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 600},
+        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 2000},
     }).encode("utf-8")
     try:
         req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read())
-        for cand in data.get("candidates", []):
+        cands = data.get("candidates", []) or []
+        for cand in cands:
             for part in cand.get("content", {}).get("parts", []):
                 t = part.get("text") or ""
                 t = t.strip()
                 if t:
-                    log("  Pro 프롬프트 다듬기 완료")
+                    log(f"  Pro 프롬프트 다듬기 완료 ({len(t)}자)")
                     return t
+        # 응답 본 적 없는 경우 디버그
+        finish_reasons = [c.get("finishReason") for c in cands]
+        log(f"  Pro 응답 비었음 (candidates={len(cands)}, finishReasons={finish_reasons}) - 원본 프롬프트 사용", "WARN")
     except Exception as e:
         log(f"  Pro 다듬기 실패 ({e}) — 원본 프롬프트 사용", "WARN")
     return prompt
