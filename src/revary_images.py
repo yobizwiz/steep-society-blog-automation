@@ -29,9 +29,24 @@ def _esc(s):
     return (s or "").replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def _cdn_w(url, w):
+    sep = "&" if "?" in url else "?"
+    return f"{url}{sep}width={w}"
+
+
 def _img_tag(url, alt):
-    return (f'<p style="margin: 28px 0;"><img src="{url}" alt="{_esc(alt)}" '
-            f'loading="lazy" style="width: 100%; height: auto; border-radius: 12px;" /></p>')
+    a = _esc(alt)
+    srcset = f"{_cdn_w(url,800)} 800w, {_cdn_w(url,1200)} 1200w, {_cdn_w(url,1600)} 1600w"
+    sizes = "(max-width: 700px) 800px, (max-width: 1100px) 1200px, 1600px"
+    return (
+        f'<p style="margin: 28px 0;">'
+        f'<img src="{url}" alt="{a}" title="{a}" '
+        f'width="1600" height="900" '
+        f'loading="lazy" decoding="async" '
+        f'srcset="{srcset}" sizes="{sizes}" '
+        f'style="width: 100%; height: auto; border-radius: 12px;" />'
+        f'</p>'
+    )
 
 
 def revary_one(env, art):
