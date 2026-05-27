@@ -203,6 +203,64 @@ STEEP_STYLE_SUFFIX = (
 ).replace("NObright","no bright")
 
 
+
+def generate_gemini_image(prompt, *, api_key, model="gemini-3.1-flash-image-preview",
+                          n=1, aspect_ratio="16:9", max_retries=5):
+    """Generate image via Gemini multimodal model (:generateContent endpoint).
+    Used for Nano Banana family (e.g., gemini-3.1-flash-image-preview)."""
+    url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+           f"{model}:generateContent?key={api_key}")
+    full_prompt = (
+        f"{prompt}\n\n"
+        f"Output: a single high-quality {aspect_ratio} aspect ratio horizontal photograph."
+    )
+    body = json.dumps({
+        "contents": [{"parts": [{"text": full_prompt}]}],
+        "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]},
+    }).encode("utf-8")
+    backoff_429 = [30, 90, 180, 360, 600]
+    last_err = None
+    for attempt in range(1, max_retries + 1):
+        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=180) as resp:
+                data = json.loads(resp.read())
+            out = []
+            for cand in data.get("candidates", []):
+                for part in cand.get("content", {}).get("parts", []):
+                    inline = part.get("inlineData") or part.get("inline_data") or {}
+                    b64 = inline.get("data")
+                    if b64:
+                        out.append(base64.b64decode(b64))
+            if out:
+                return out
+            raise ImagenSafetyBlocked("empty image output (safety filter or no image in response)")
+        except ImagenSafetyBlocked:
+            raise
+        except urllib.error.HTTPError as e:
+            body_text = e.read().decode("utf-8", errors="ignore")[:300]
+            last_err = f"HTTP {e.code}: {body_text}"
+            if e.code in (400, 401, 403):
+                raise RuntimeError(f"Gemini Image API {last_err}")
+            if e.code == 429:
+                if ("per_day" in body_text.lower() or "requests_per_day" in body_text.lower()
+                        or "perday" in body_text.lower() or "PerDay" in body_text):
+                    raise RuntimeError("DAILY_QUOTA_EXHAUSTED: " + body_text[:160])
+                wait = backoff_429[min(attempt - 1, len(backoff_429) - 1)]
+                log(f"  Gemini Image 429 시도 {attempt}/{max_retries}, {wait}초 대기", "WARN")
+                time.sleep(wait)
+            else:
+                wait = 5 * attempt
+                log(f"  Gemini Image {e.code} 시도 {attempt}/{max_retries}, {wait}초 후 재시도", "WARN")
+                time.sleep(wait)
+        except Exception as e:
+            last_err = str(e)
+            wait = 5 * attempt
+            log(f"  Gemini Image 예외 시도 {attempt}/{max_retries}: {e}", "WARN")
+            time.sleep(wait)
+    raise RuntimeError(f"Gemini Image 재시도 모두 실패: {last_err}")
+
+
 def generate_image_for_slot(*, prompt, filename_base, api_key, model,
                               variants=1, aspect_ratio="16:9",
                               anthropic_key=None, max_vision_retries=2):
@@ -217,8 +275,14 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
     last_png = None
     pngs = []
 
+    # Force Nano Banana 2 (Gemini) for higher quality. Imagen kept as fallback.
+    effective_model = "gemini-3.1-flash-image-preview"
+
     def _try_generate(p):
-        return generate_imagen(p, api_key=api_key, model=model,
+        if effective_model.startswith("gemini"):
+            return generate_gemini_image(p, api_key=api_key, model=effective_model,
+                                          n=variants, aspect_ratio=aspect_ratio)
+        return generate_imagen(p, api_key=api_key, model=effective_model,
                                 n=variants, aspect_ratio=aspect_ratio)
 
     for vision_try in range(max_vision_retries + 1):
