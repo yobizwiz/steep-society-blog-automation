@@ -79,21 +79,49 @@ def _strip_html(h):
     return re.sub(r"\s+", " ", t).strip()
 
 
-SPEC_INSTRUCTION = """You are generating BODY IMAGE specifications for an existing,
-already-written blog article. The article body has {n} image placeholder slot(s) that
-need images. Produce EXACTLY {n} image spec(s), one per slot, in reading order.
+SPEC_INSTRUCTION = """You are an expert food/lifestyle photography art director writing
+prompts for a high-end AI image generator. The article body has {n} image placeholder slot(s)
+needing images. Produce EXACTLY {n} image spec(s), one per slot, in reading order.
 
-Vary BOTH the SCENE/SETTING and the camera ANGLE across the {n} images so the article reads like a real lifestyle blog, NOT repetitive product shots and NOT all tight macro close-ups. Use varied lived-in home settings such as: a kitchen dining table beside a window with softly blurred garden/outdoor scenery (bokeh), a cozy living-room side table, a sunlit windowsill, a warm wooden counter with a blurred interior background — each with shallow depth of field and a soft out-of-focus background for a sense of place. STRONGLY PREFER non-aerial angles — eye-level three-quarter and 45-degree side angles are the default. Use top-down/overhead flat-lay for AT MOST 1 image per article (prefer 0). NEVER make all or most images top-down. Top-down is only acceptable when the subject is genuinely a flat ingredient layout that would be hard to read otherwise. Keep NO people. State the scene and the camera angle at the start of each prompt. 
-Follow the image tone/style rules from the system prompt above EXACTLY (brand tone,
-still-life / product / scene only). ABSOLUTE RULE: no people or body parts of any kind
-(no person, hand, finger, face, mom, family, etc.) — describe objects, food/tea, props,
-surfaces, light, settings only. Each prompt must visually MATCH the section of the
-article it sits in, so the photo feels connected to the surrounding text.
+CRITICAL — write each "prompt" field as a DENSE, EXTREMELY DETAILED photographer brief that
+leaves no ambiguity to the image model. Each prompt must explicitly state ALL of the following:
+
+1. SUBJECT (specific): exact drink/object with vivid color and material descriptors. E.g.
+   "ruby-red hibiscus iced tea in a clear glass pitcher with visible ice cubes and a slice of
+   fresh orange floating inside" — NOT just "iced tea".
+
+2. CAMERA: angle (eye-level three-quarter, 45-degree side, occasional top-down), distance
+   (medium close-up / wider), focal length feel (e.g. "shot on 50mm, shallow depth of field").
+
+3. LIGHTING: direction + quality + time of day. E.g. "soft morning sunlight from a left-side
+   window with gentle warm golden cast and realistic soft shadows; no harsh studio glare".
+
+4. SURFACE & PROPS: named materials and specific items. E.g. "weathered warm oak dining table,
+   folded natural beige linen napkin to the right, a small white ceramic dish with dried
+   hibiscus petals, fresh mint sprig in foreground, brass spoon".
+
+5. BACKGROUND: specific lived-in setting with depth. E.g. "softly blurred kitchen interior with
+   a window letting in dappled garden greenery behind, bokeh, sense of place".
+
+6. COLOR PALETTE: 2-3 anchor colors. E.g. "ruby red of the tea, warm oak browns, soft linen
+   beige, hint of fresh mint green".
+
+7. STYLE: "authentic editorial food photography, photorealistic, subtle 35mm film grain, no
+   CGI gloss, no oversaturation".
+
+ABSOLUTE RULES (auto-fail if violated):
+- NO people or body parts (no person, hand, finger, face, mom, family, etc.) — describe only
+  objects, food/tea, props, surfaces, light, settings.
+- VARY scene AND angle across the {n} images (mix kitchen table / living-room side table /
+  windowsill / wooden counter; mix eye-level / 45-degree / occasional top-down). NOT all top-down.
+- The subject MUST match what the article is about (re-read body text near each slot).
 
 Return ONE JSON object, nothing else:
 {{
   "images": [
-    {{"prompt": "detailed image prompt (objects/scene only)", "filename": "lowercase-hyphens", "alt": "descriptive alt text"}}
+    {{"prompt": "<extremely detailed photographer brief covering all 7 dimensions above>",
+      "filename": "lowercase-hyphens-descriptive",
+      "alt": "concise descriptive alt text for screen readers"}}
   ]
 }}
 Exactly {n} item(s) in "images"."""
