@@ -90,8 +90,11 @@ leaves no ambiguity to the image model. Each prompt must explicitly state ALL of
    "ruby-red hibiscus iced tea in a clear glass pitcher with visible ice cubes and a slice of
    fresh orange floating inside" — NOT just "iced tea".
 
-2. CAMERA: angle (eye-level three-quarter, 45-degree side, occasional top-down), distance
-   (medium close-up / wider), focal length feel (e.g. "shot on 50mm, shallow depth of field").
+2. CAMERA: angle is ALMOST ALWAYS eye-level three-quarter or 45-degree side angle.
+   Top-down/overhead flat-lay is allowed for AT MOST 1 image per article — prefer ZERO.
+   NEVER make all images top-down. State the angle explicitly (e.g. "eye-level three-quarter
+   from the left, slightly below pitcher height"). Distance: medium close-up unless wider helps
+   show the setting. Focal length feel (e.g. "shot on 50mm, shallow depth of field").
 
 3. LIGHTING: direction + quality + time of day. E.g. "soft morning sunlight from a left-side
    window with gentle warm golden cast and realistic soft shadows; no harsh studio glare".
@@ -112,8 +115,10 @@ leaves no ambiguity to the image model. Each prompt must explicitly state ALL of
 ABSOLUTE RULES (auto-fail if violated):
 - NO people or body parts (no person, hand, finger, face, mom, family, etc.) — describe only
   objects, food/tea, props, surfaces, light, settings.
-- VARY scene AND angle across the {n} images (mix kitchen table / living-room side table /
-  windowsill / wooden counter; mix eye-level / 45-degree / occasional top-down). NOT all top-down.
+- VARY scene across the {n} images (mix kitchen dining table / living-room side table /
+  sunlit windowsill / wooden counter / cozy nook with window light).
+- DEFAULT angle for every image is eye-level three-quarter or 45-degree side. Top-down/flat-lay
+  is allowed only for AT MOST 1 image per article (preferably ZERO). NEVER all top-down.
 - The subject MUST match what the article is about (re-read body text near each slot).
 
 Return ONE JSON object, nothing else:
