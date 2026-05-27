@@ -262,7 +262,8 @@ def generate_gemini_image(prompt, *, api_key, model="gemini-3.1-flash-image-prev
 
 
 
-def enhance_prompt_with_gemini_pro(prompt, *, api_key, model="gemini-2.5-pro"):
+def enhance_prompt_with_gemini_pro(prompt, *, api_key, model="gemini-pro-latest"):
+    log(f"  Pro 다듬기 시작 (model={model})")
     """Send the photographer-style brief to Gemini Pro for refinement into a richer
     image-generation prompt (mimics how the Gemini chat app silently enhances prompts
     before calling Nano Banana). Returns enhanced prompt string, falls back to original
@@ -312,7 +313,8 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
     # (mimics what the Gemini chat app silently does before image gen — closes most of
     # the quality gap between API-direct calls and chat-app results).
     if anthropic_key and api_key:  # api_key here is the Google key for both Pro and Nano Banana
-        safe_prompt = enhance_prompt_with_gemini_pro(safe_prompt, api_key=api_key) + STEEP_STYLE_SUFFIX
+        safe_prompt = enhance_prompt_with_gemini_pro(safe_prompt, api_key=api_key)
+    safe_prompt = safe_prompt + STEEP_STYLE_SUFFIX
 
     last_webp = None
     last_png = None
