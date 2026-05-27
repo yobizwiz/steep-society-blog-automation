@@ -131,13 +131,32 @@ def upload_image(env, *, webp_bytes, filename, alt):
     return cdn_url
 
 
+def _cdn_with_width(url, w):
+    """Shopify CDN supports ?width= image transformations. Handle existing query strings."""
+    sep = "&" if "?" in url else "?"
+    return f"{url}{sep}width={w}"
+
+
 def insert_body_images(body_html, body_image_urls):
     out = body_html
     for idx, img in enumerate(body_image_urls, start=1):
         marker = f"<!-- IMG:body-{idx} -->"
         alt_safe = img["alt"].replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
-        tag = (f'<p style="margin: 28px 0;"><img src="{img["url"]}" alt="{alt_safe}" '
-               f'loading="lazy" style="width: 100%; height: auto; border-radius: 12px;" /></p>')
+        url = img["url"]
+        srcset = (f"{_cdn_with_width(url, 800)} 800w, "
+                  f"{_cdn_with_width(url, 1200)} 1200w, "
+                  f"{_cdn_with_width(url, 1600)} 1600w")
+        sizes = "(max-width: 700px) 800px, (max-width: 1100px) 1200px, 1600px"
+        tag = (
+            f'<p style="margin: 28px 0;">'
+            f'<img src="{url}" '
+            f'alt="{alt_safe}" title="{alt_safe}" '
+            f'width="1600" height="900" '
+            f'loading="lazy" decoding="async" '
+            f'srcset="{srcset}" sizes="{sizes}" '
+            f'style="width: 100%; height: auto; border-radius: 12px;" />'
+            f'</p>'
+        )
         if marker in out:
             out = out.replace(marker, tag)
     return out
