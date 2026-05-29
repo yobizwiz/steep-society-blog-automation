@@ -58,21 +58,33 @@ def main():
     arts = fetch_all(env, blog_id)
     n_total = len(arts)
     n_broken = 0
+    n_revaried = 0       # 새 톤으로 재컨셉된 글
+    n_old_with_img = 0   # 옛날글이면서 사진 있는데 아직 재컨셉 안 된 글
+    REVARY_MARKER = "<!-- revaried-v2 -->"
+    CUTOFF = "2026-05-12"  # revary 대상 컷오프와 동일
     for a in arts:
         h = a.get("body_html") or ""
-        if len(re.findall(r"<img\b", h, re.I)) == 0 and re.search(r"<!--\s*IMG:body", h, re.I):
+        has_img = len(re.findall(r"<img\b", h, re.I)) > 0
+        has_placeholder = bool(re.search(r"<!--\s*IMG:body", h, re.I))
+        created = (a.get("created_at") or "")[:10]
+        if not has_img and has_placeholder:
             n_broken += 1
+        if REVARY_MARKER in h:
+            n_revaried += 1
+        if has_img and created < CUTOFF and REVARY_MARKER not in h:
+            n_old_with_img += 1
     n_ok = n_total - n_broken
     pct = round(n_ok / n_total * 100, 1) if n_total else 0
 
     msg = (
-        f"<b>📊 {shop} 사진 복구 진행</b>\n"
-        f"전체 {n_total}편\n"
-        f"  ✅ 사진 정상: <b>{n_ok}편</b> ({pct}%)\n"
-        f"  ❌ 깨짐(복구 대기): <b>{n_broken}편</b>"
+        f"<b>📊 {shop} 블로그 사진 진행</b>\n\n"
+        f"<b>① 사진 복구 (깨진 글)</b>\n"
+        f"  전체 {n_total}편 / 정상 <b>{n_ok}편</b> ({pct}%) / 깨짐 <b>{n_broken}편</b>\n\n"
+        f"<b>② 새 톤 재컨셉 (revary)</b>\n"
+        f"  새 톤 적용 <b>{n_revaried}편</b> / 옛톤 남음 <b>{n_old_with_img}편</b>"
     )
-    if n_broken == 0:
-        msg += "\n\n🎉 사진 복구 완료!"
+    if n_broken == 0 and n_old_with_img == 0:
+        msg += "\n\n🎉 모든 사진 작업 완료!"
 
     data = urllib.parse.urlencode({
         "chat_id": chat, "text": msg, "parse_mode": "HTML",
