@@ -4,7 +4,7 @@ on:
   schedule:
     # 매주 금요일 13:00 UTC (= 09:00 AM EDT) — 트리거 시 다음주 월~일 7일치를 미리 생성.
     # 사용자가 깨어있는 시간이라 에러 발생 시 즉시 대응 가능. 11월 EST 전환 시 14:00 UTC로 변경 필요.
-    - cron: '0 13 * * 5'
+    - cron: '7 13 * * 5'  # 13:07 UTC — off-hour to avoid GitHub schedule congestion at round-hour
   workflow_dispatch:
     inputs:
       start_date:
