@@ -22,7 +22,7 @@ from repair_images import shop_req, get_blog_id, fetch_all, make_specs, _strip_h
 
 MARKER = "<!-- revaried-v2 -->"
 CUTOFF = "2026-05-12"  # articles created before this were the upgrade-damaged old set
-IMG_BLOCK = re.compile(r'<p[^>]*>\s*<img\b[^>]*?>\s*</p>', re.I)
+IMG_BLOCK = re.compile(r'<(p|div)[^>]*>\s*<img\b[^>]*?>\s*</\1>', re.I)
 
 
 def _esc(s):
