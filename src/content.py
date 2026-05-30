@@ -25,17 +25,33 @@ def _build_few_shot_block(few_shot, max_chars_per=3500):
     return "## REFERENCE POSTS (brand voice)\n\n" + "\n\n".join(blocks)
 
 
+_NO_TEMP_MODELS = set()  # models that reject the deprecated `temperature` param (e.g. Opus 4.8+)
+
 def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=0.7):
-    body = json.dumps({"model": model, "max_tokens": max_tokens, "temperature": temperature,
-                       "system": system, "messages": messages}).encode("utf-8")
-    req = urllib.request.Request("https://api.anthropic.com/v1/messages", data=body,
-        headers={"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"})
-    try:
+    def _post(send_temp):
+        payload = {"model": model, "max_tokens": max_tokens,
+                   "system": system, "messages": messages}
+        if send_temp and model not in _NO_TEMP_MODELS:
+            payload["temperature"] = temperature
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request("https://api.anthropic.com/v1/messages", data=data,
+            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"})
         with urllib.request.urlopen(req, timeout=300) as resp:
-            data = json.loads(resp.read())
+            return json.loads(resp.read())
+    try:
+        data = _post(send_temp=True)
     except urllib.error.HTTPError as e:
         body_text = e.read().decode("utf-8", errors="ignore")[:1000]
-        raise RuntimeError("Claude API HTTP " + str(e.code) + ": " + body_text)
+        # Self-heal: newer models (Opus 4.8+) deprecate `temperature` -> retry once without it
+        if e.code == 400 and "temperature" in body_text and model not in _NO_TEMP_MODELS:
+            _NO_TEMP_MODELS.add(model)
+            log("[claude] '" + str(model) + "' rejects temperature; retrying without it")
+            try:
+                data = _post(send_temp=False)
+            except urllib.error.HTTPError as e2:
+                raise RuntimeError("Claude API HTTP " + str(e2.code) + ": " + e2.read().decode("utf-8", errors="ignore")[:1000])
+        else:
+            raise RuntimeError("Claude API HTTP " + str(e.code) + ": " + body_text)
     parts = data.get("content", [])
     text_parts = [p.get("text", "") for p in parts if p.get("type") == "text"]
     return "\n".join(text_parts).strip()
