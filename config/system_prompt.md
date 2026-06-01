@@ -90,6 +90,8 @@
 
 이 규칙을 어기면 자동화 전체가 그날 글에 대해 실패한다.
 
+**제품·포장 표면에 글자/라벨/로고 금지.** AI가 차 파우치·사셰·틴·캐니스터·기프트 박스·병 등에 글자를 그리면 의미 없는 가짜 텍스트가 되어 품질을 떨어뜨린다. 모든 이미지 프롬프트(featured·body 전부)에 다음 문구를 반드시 포함한다: "no visible text, letters, words, labels, logos, or brand names on any product or packaging — all surfaces blank and unbranded". 라벨 느낌이 필요하면 글자 대신 식물 일러스트·심볼·무지 크라프트로 표현한다.
+
 ## 11. 출력 JSON 스키마
 
 ```json
