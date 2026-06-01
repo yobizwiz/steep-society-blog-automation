@@ -274,10 +274,12 @@ Output ONE JSON object with EXACTLY these fields, no other text:
 }"""
 
 
+_GEMINI_BAD_MODELS = set()  # models that proved unavailable this run (self-heal)
+
+
 def gemini_review(article, env):
     """Independent cross-model review by Gemini 2.5 Pro.
     Returns dict with scores + weaknesses. Does NOT modify article body."""
-    log("[Pass 4b] Gemini cross-validation (model=gemini-pro-latest)")
     api_key = env.get("GOOGLE_API_KEY")
     if not api_key:
         log("[Pass 4b] GOOGLE_API_KEY missing — skipping", "WARN")
@@ -299,10 +301,14 @@ def gemini_review(article, env):
         "systemInstruction": {"parts": [{"text": GEMINI_REVIEW_SYSTEM}]},
         "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2000, "responseMimeType": "application/json"}
     }
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key={api_key}"
+    _gm_fallback = "gemini-pro-latest"
+    primary = (env.get("GEMINI_REVIEW_MODEL") or _gm_fallback).strip()
+    model = _gm_fallback if primary in _GEMINI_BAD_MODELS else primary
+    log(f"[Pass 4b] Gemini cross-validation (model={model})")
     last_err = None
     for attempt in range(1, 4):
         try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
             req = urllib.request.Request(url, data=json.dumps(payload).encode(),
                 headers={"Content-Type":"application/json"})
             with urllib.request.urlopen(req, timeout=60) as resp:
@@ -315,6 +321,23 @@ def gemini_review(article, env):
                 result.get("onpage_seo",{}).get("score","?"),
                 result.get("conversion_alignment",{}).get("score","?")))
             return result
+        except urllib.error.HTTPError as e:
+            etext = ""
+            try:
+                etext = e.read().decode("utf-8", errors="ignore")[:300]
+            except Exception:
+                pass
+            last_err = f"HTTP {e.code}: {etext}"
+            if model != _gm_fallback and e.code in (400, 404) and re.search(
+                    r"not found|not supported|unsupported|deprecat|invalid|does not exist|no longer", etext, re.I):
+                _GEMINI_BAD_MODELS.add(model)
+                log(f"[Pass 4b] model '{model}' unavailable ({e.code}) — falling back to {_gm_fallback}", "WARN")
+                model = _gm_fallback
+                continue
+            log(f"[Pass 4b] attempt {attempt}/3 failed: {last_err[:120]}", "WARN")
+            if attempt < 3:
+                import time
+                time.sleep(5 * attempt)
         except Exception as e:
             last_err = e
             log(f"[Pass 4b] attempt {attempt}/3 failed: {str(e)[:120]}", "WARN")
