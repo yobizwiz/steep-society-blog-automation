@@ -115,6 +115,9 @@ leaves no ambiguity to the image model. Each prompt must explicitly state ALL of
 ABSOLUTE RULES (auto-fail if violated):
 - NO people or body parts (no person, hand, finger, face, mom, family, etc.) — describe only
   objects, food/tea, props, surfaces, light, settings.
+- NO visible text, letters, words, labels, logos, or brand names on any product or packaging
+  (tea pouch, sachet, tin, canister, jar, gift box) — all surfaces blank and unbranded; use a small
+  botanical illustration or symbol instead of lettering if a label feel is needed.
 - VARY scene across the {n} images (mix kitchen dining table / living-room side table /
   sunlit windowsill / wooden counter / cozy nook with window light).
 - DEFAULT angle for every image is eye-level three-quarter or 45-degree side. Top-down/flat-lay
