@@ -1,0 +1,32 @@
+name: Coverage Report (one-off, read-only)
+on:
+  workflow_dispatch: {}
+concurrency:
+  group: coverage-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Create api-keys.txt from secrets
+        run: |
+          cat > api-keys.txt <<'EOF'
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL=${{ secrets.ANTHROPIC_MODEL }}
+          ANTHROPIC_REVIEW_MODEL=${{ secrets.ANTHROPIC_REVIEW_MODEL }}
+          GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+          SHOPIFY_STORE_URL=${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
+          EOF
+      - name: Run coverage report
+        run: python src/coverage_report.py
