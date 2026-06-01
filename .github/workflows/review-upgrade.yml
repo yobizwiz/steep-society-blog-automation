@@ -40,6 +40,7 @@ jobs:
           ANTHROPIC_MODEL=${{ secrets.ANTHROPIC_MODEL }}
           ANTHROPIC_REVIEW_MODEL=${{ secrets.ANTHROPIC_REVIEW_MODEL }}
           GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+          GEMINI_REVIEW_MODEL=${{ secrets.GEMINI_REVIEW_MODEL }}
           IMAGEN_MODEL=${{ secrets.IMAGEN_MODEL }}
           SHOPIFY_STORE_URL=${{ secrets.SHOPIFY_STORE_URL }}
           SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
