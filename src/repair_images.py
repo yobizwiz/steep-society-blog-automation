@@ -206,8 +206,8 @@ def repair_one(env, art):
     log(f"repair: {title[:50]} (slots={n})")
     new_body = fill_body_placeholders(env, body, title)
 
-    shop_req(env, f"blogs/{art['__blog_id']}/articles/{aid}.json", method="PUT",
-             payload={"article": {"id": int(aid), "body_html": new_body}})
+    from shopify_pub import update_article_body
+    update_article_body(env, aid, new_body)
     return {"id": aid, "title": title[:50], "status": "repaired", "images_added": n}
 
 
