@@ -151,15 +151,9 @@ def shopify_fetch_article_body(env, article_id):
 
 
 def shopify_update_body(env, article_id, body_html):
-    store = env["SHOPIFY_STORE_URL"]
-    token = env["SHOPIFY_ADMIN_TOKEN"]
-    url = f"https://{store}/admin/api/2025-01/articles/{article_id}.json"
-    payload = {"article": {"id": int(article_id), "body_html": body_html}}
-    req = urllib.request.Request(url, method="PUT",
-        data=json.dumps(payload).encode(),
-        headers={"X-Shopify-Access-Token": token, "Content-Type":"application/json"})
-    with urllib.request.urlopen(req, timeout=20) as r:
-        return json.loads(r.read())['article']
+    # Preserve publish schedule (a plain REST PUT republishes a scheduled article).
+    from shopify_pub import update_article_body
+    return update_article_body(env, article_id, body_html)
 
 
 def telegram_send(env, text):
@@ -261,16 +255,10 @@ def regenerate_article(article_info, env, before_min, before_article):
     body_with_imgs = insert_body_images(new_article["body_html"], body_uploaded)
     body_with_imgs = _apply_paragraph_spacing(body_with_imgs)
     
-    # Update existing article (keep handle/date) via REST
-    store = env["SHOPIFY_STORE_URL"]; token = env["SHOPIFY_ADMIN_TOKEN"]
-    payload = {"article": {"id": int(aid), "body_html": body_with_imgs}}
-    if feat_url:
-        payload["article"]["image"] = {"src": feat_url, "alt": featured["alt"]}
-    req = urllib.request.Request(f"https://{store}/admin/api/2025-01/articles/{aid}.json",
-        method="PUT", data=json.dumps(payload).encode(),
-        headers={"X-Shopify-Access-Token": token, "Content-Type":"application/json"})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        json.loads(r.read())
+    # Update existing article body + featured image WITHOUT changing publish schedule
+    from shopify_pub import update_article_body
+    _img = {"src": feat_url, "alt": featured["alt"]} if feat_url else None
+    update_article_body(env, aid, body_with_imgs, image=_img)
     log(f"  ✅ regenerated + updated (min {before_min} → {new_min})")
     return {"id": aid, "title": title[:50], "status": "regenerated",
             "before": before_min, "after": new_min,
