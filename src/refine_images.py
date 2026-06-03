@@ -94,8 +94,8 @@ def refine_one(env, art, slots):
     if n_img(new_body) != n:
         return {"handle": art.get("handle"), "status": f"guard_img_count({n_img(new_body)}!={n})"}
 
-    shop_req(env, f"blogs/{art['__blog_id']}/articles/{aid}.json", method="PUT",
-             payload={"article": {"id": int(aid), "body_html": new_body}})
+    from shopify_pub import update_article_body
+    update_article_body(env, aid, new_body)
     return {"handle": art.get("handle"), "status": "refined", "slots": bad, "images": n}
 
 
