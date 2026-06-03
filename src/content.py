@@ -277,6 +277,48 @@ Output ONE JSON object with EXACTLY these fields, no other text:
 _GEMINI_BAD_MODELS = set()  # models that proved unavailable this run (self-heal)
 
 
+_GEM_DIMS = ("content_quality", "onpage_seo", "conversion_alignment", "ai_search_optimization", "eeat")
+
+
+def _parse_gemini_json(text):
+    """Tolerant parse of Gemini's JSON review. Repairs common malformations (code
+    fences, trailing commas, literal control chars) but NEVER fabricates data —
+    returns None if it cannot recover a dict."""
+    if not text:
+        return None
+    raw = text.strip()
+    m = re.search(r"```(?:json)?\s*(.+?)\s*```", raw, re.DOTALL)
+    if m:
+        raw = m.group(1).strip()
+    s = raw.find("{")
+    e = raw.rfind("}")
+    if s < 0 or e <= s:
+        return None
+    candidate = raw[s:e + 1]
+    repaired = re.sub(r",(\s*[}\]])", r"\1", candidate)  # drop trailing commas
+    for attempt in (candidate, repaired):
+        try:
+            obj = json.loads(attempt, strict=False)  # strict=False tolerates literal control chars
+            if isinstance(obj, dict):
+                return obj
+        except Exception:
+            continue
+    return None
+
+
+def _gemini_scores_valid(obj):
+    """True only for a genuine 5-dim review (>=3 numeric dimension scores)."""
+    if not isinstance(obj, dict):
+        return False
+    n = 0
+    for d in _GEM_DIMS:
+        v = obj.get(d)
+        sc = v.get("score") if isinstance(v, dict) else v
+        if isinstance(sc, (int, float)) and not isinstance(sc, bool):
+            n += 1
+    return n >= 3
+
+
 def gemini_review(article, env):
     """Independent cross-model review by Gemini 2.5 Pro.
     Returns dict with scores + weaknesses. Does NOT modify article body."""
@@ -299,7 +341,7 @@ def gemini_review(article, env):
             "parts": [{"text": user_msg}]
         }],
         "systemInstruction": {"parts": [{"text": GEMINI_REVIEW_SYSTEM}]},
-        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2000, "responseMimeType": "application/json"}
+        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 4000, "responseMimeType": "application/json"}
     }
     _gm_fallback = "gemini-pro-latest"
     primary = (env.get("GEMINI_REVIEW_MODEL") or _gm_fallback).strip()
@@ -315,7 +357,9 @@ def gemini_review(article, env):
                 data = json.loads(resp.read())
             cand = (data.get("candidates") or [{}])[0]
             text = "".join(p.get("text","") for p in (cand.get("content",{}).get("parts") or []))
-            result = _extract_json(text)
+            result = _parse_gemini_json(text)
+            if not _gemini_scores_valid(result):
+                raise ValueError("gemini returned no valid dimension scores")
             log("[Pass 4b] Gemini done — content={} seo={} conv={}".format(
                 result.get("content_quality",{}).get("score","?"),
                 result.get("onpage_seo",{}).get("score","?"),
