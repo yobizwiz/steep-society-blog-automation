@@ -41,6 +41,35 @@ def _gql(env, query, variables=None):
     return data["data"]
 
 
+def update_article_body(env, article_id, body_html, image=None):
+    """Update an article's body (and optionally featured image) WITHOUT changing its
+    publish schedule. A plain REST PUT silently republishes a scheduled article
+    ('publish now'); this captures the current publish state and restores it via
+    GraphQL articleUpdate afterward."""
+    gid = f"gid://shopify/Article/{int(article_id)}"
+    pub_at = None; is_pub = None
+    try:
+        cur = (_gql(env, '{ article(id: "%s") { publishedAt isPublished } }' % gid) or {}).get("article") or {}
+        pub_at = cur.get("publishedAt"); is_pub = cur.get("isPublished")
+    except Exception as e:
+        log(f"  [body-update] publish-state capture failed: {e}", "WARN")
+    art = {"id": int(article_id), "body_html": body_html}
+    if image:
+        art["image"] = image
+    res = _api(env, f"articles/{int(article_id)}.json", method="PUT", body={"article": art})
+    if pub_at:
+        mut = ("mutation u($id: ID!, $article: ArticleUpdateInput!) { "
+               "articleUpdate(id: $id, article: $article) { article { id } userErrors { field message } } }")
+        try:
+            r = _gql(env, mut, {"id": gid, "article": {"isPublished": bool(is_pub), "publishDate": pub_at}})
+            ue = (r.get("articleUpdate") or {}).get("userErrors", [])
+            if ue:
+                log(f"  [body-update] publishDate restore errors: {ue}", "WARN")
+        except Exception as e:
+            log(f"  [body-update] publish-state restore failed: {e}", "WARN")
+    return res.get("article", {})
+
+
 def find_article_by_publish_date(env, date_str):
     """Look up Shopify article scheduled to publish on date_str (YYYY-MM-DD).
     Returns dict {id, title, handle, publishedAt, isPublished} if exists, else None.
