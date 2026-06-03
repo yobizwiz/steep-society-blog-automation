@@ -89,8 +89,8 @@ def revary_one(env, art):
     if MARKER not in new_body:
         new_body = new_body + "\n" + MARKER
 
-    shop_req(env, f"blogs/{art['__blog_id']}/articles/{aid}.json", method="PUT",
-             payload={"article": {"id": int(aid), "body_html": new_body}})
+    from shopify_pub import update_article_body
+    update_article_body(env, aid, new_body)
     return {"id": aid, "title": title[:50], "status": "revaried", "images": n}
 
 
