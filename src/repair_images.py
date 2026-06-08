@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_env, load_system_prompt, log
 from images import generate_image_for_slot
 from shopify_pub import upload_image, insert_body_images
-from content import _claude_call, _extract_json
+from content import _claude_call, _extract_json, _parse_gemini_json
 
 API = "2024-10"
 
@@ -154,7 +154,7 @@ def make_specs(title, body_text, n, env):
         messages=[{"role": "user", "content": user}],
         max_tokens=1500, temperature=0.5,
     )
-    obj = _extract_json(raw)
+    obj = _parse_gemini_json(raw) or _extract_json(raw)
     imgs = obj.get("images", [])
     if len(imgs) < n:
         raise RuntimeError(f"spec count {len(imgs)} < needed {n}")
