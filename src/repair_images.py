@@ -147,18 +147,26 @@ def make_specs(title, body_text, n, env):
         f"Article body (plain text, in order):\n{body_text[:6000]}\n\n"
         f"Produce exactly {n} body image spec(s) matching the sections of this article."
     )
-    raw = _claude_call(
-        api_key=env["ANTHROPIC_API_KEY"],
-        model=env.get("ANTHROPIC_REVIEW_MODEL", env["ANTHROPIC_MODEL"]),
-        system=full_system,
-        messages=[{"role": "user", "content": user}],
-        max_tokens=1500, temperature=0.5,
-    )
-    obj = _parse_gemini_json(raw) or _extract_json(raw)
-    imgs = obj.get("images", [])
-    if len(imgs) < n:
-        raise RuntimeError(f"spec count {len(imgs)} < needed {n}")
-    return imgs[:n]
+    last_err = None
+    for _attempt in range(3):
+        raw = _claude_call(
+            api_key=env["ANTHROPIC_API_KEY"],
+            model=env.get("ANTHROPIC_REVIEW_MODEL", env["ANTHROPIC_MODEL"]),
+            system=full_system,
+            messages=[{"role": "user", "content": user}],
+            max_tokens=4000, temperature=0.5,
+        )
+        try:
+            obj = _parse_gemini_json(raw) or _extract_json(raw)
+            imgs = (obj or {}).get("images", [])
+        except Exception as e:
+            last_err = e
+            imgs = []
+        if len(imgs) >= n:
+            return imgs[:n]
+        last_err = last_err or RuntimeError(f"spec count {len(imgs)} < needed {n}")
+        log(f"[make_specs] attempt {_attempt+1}/3 got {len(imgs)}/{n} specs — retrying", "WARN")
+    raise RuntimeError(f"make_specs failed after 3 attempts: {last_err}")
 
 
 def fill_body_placeholders(env, body_html, title):
