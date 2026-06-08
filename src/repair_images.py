@@ -113,6 +113,10 @@ leaves no ambiguity to the image model. Each prompt must explicitly state ALL of
    CGI gloss, no oversaturation".
 
 ABSOLUTE RULES (auto-fail if violated):
+- PHYSICALLY REALISTIC only: no kettle, carafe, pitcher or portafilter floating in mid-air or
+  pouring liquid by itself — show the finished drink or equipment resting on a surface. A
+  portafilter must be locked into an espresso machine, never detached and pouring. If the
+  article is about a specific appliance/tool, that item is the realistic hero. No impossible physics.
 - NO people or body parts (no person, hand, finger, face, mom, family, etc.) — describe only
   objects, food/tea, props, surfaces, light, settings.
 - NO visible text, letters, words, labels, logos, or brand names on any product or packaging
