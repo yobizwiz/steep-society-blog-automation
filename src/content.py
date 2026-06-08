@@ -303,6 +303,13 @@ def _parse_gemini_json(text):
                 return obj
         except Exception:
             continue
+    try:
+        import json_repair
+        obj = json_repair.loads(candidate)
+        if isinstance(obj, dict) and obj:
+            return obj
+    except Exception:
+        pass
     return None
 
 
