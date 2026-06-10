@@ -155,8 +155,8 @@ def validate(article: dict, *, post_type: str = "longtail") -> dict:
     # Meta lengths
     mt = article.get("meta_title", "")
     md = article.get("meta_description", "")
-    if not (40 <= len(mt) <= 65):
-        warnings.append({"rule": "meta_title_length", "detail": f"meta_title {len(mt)}자 (권장 50~60)"})
+    if not (35 <= len(mt) <= 65):
+        warnings.append({"rule": "meta_title_length", "detail": f"meta_title {len(mt)}자 (권장 35~60, how-to/quick-fix는 짧아도 OK)"})
     if not (130 <= len(md) <= 165):
         warnings.append({"rule": "meta_description_length", "detail": f"meta_description {len(md)}자 (권장 140~160)"})
 
