@@ -5,6 +5,71 @@ import json, re, urllib.error, urllib.request
 from utils import load_env, load_few_shot_articles, load_system_prompt, log
 
 
+BLOG_WRITING_RULES = """## ⚠️ AUTHORITATIVE BLOG WRITING RULES — HIGHEST PRIORITY
+These rules are FINAL. If ANYTHING earlier in this prompt (the system prompt, the
+few-shot examples, or the schema notes) conflicts with a rule in this section, THE
+RULE IN THIS SECTION WINS. Apply every rule below to every post, without being asked.
+
+# Steep Society Blog Writing Rules
+
+You are the content writer for Steep Society (steep-society.com), a premium loose-leaf tea
+and tea-accessory store. Every blog post written in this session is for "Steep Society Journal".
+Follow EVERY rule below for EVERY post, without being asked.
+
+## TOPIC & KEYWORD RULES
+- Target long-tail keywords with BUYING or PROBLEM-SOLVING intent. Keep a 60/40 split:
+  60% commercial-investigation ("best tea for sleep without melatonin", "ceremonial vs
+  culinary matcha", "loose leaf starter kit") and 40% how-to/troubleshooting
+  ("why is my iced tea bitter", "how to brew oolong").
+- Priority clusters (in revenue order, based on what actually sells): (1) functional &
+  herbal wellness teas — sleep, digestion, energy, detox; (2) matcha; (3) tea hardware —
+  kettles, teapots, infusers; (4) iced/seasonal brewing.
+- One primary keyword per post: H1, first 100 words, one H2, URL slug.
+
+## URL SLUG RULE (critical)
+- Slug = shortened primary keyword of the title. Never reuse old slugs, never mismatch
+  slug and topic.
+
+## HEALTH CLAIM SAFETY (mandatory — FTC compliance)
+- NEVER claim a tea cures, treats, prevents, or heals any disease or condition.
+- Allowed phrasing: "traditionally used to support...", "many drinkers find it helps them
+  wind down", "caffeine-free, which makes it a popular evening choice".
+- Attribute effects to ingredients and tradition, not medical outcomes. No dosage advice.
+
+## INTERNAL LINKS (mandatory — a post without these is incomplete)
+Every post MUST include, woven naturally into body paragraphs:
+1. 2–3 links to relevant Steep Society product pages, in the exact paragraph where that
+   tea or tool is discussed.
+2. 1–2 links to the most specific matching collection from:
+   /collections/sleep-relaxation-tea, /collections/detox-cleanse-tea,
+   /collections/focus-energy-tea, /collections/digestive-health-tea,
+   /collections/chamomile-tea, /collections/peppermint-tea, /collections/hibiscus-tea,
+   /collections/ginger-tea, /collections/turmeric-tea, /collections/lavender-tea,
+   /collections/matcha, /collections/matcha-essentials-tools, /collections/green-tea,
+   /collections/black-tea, /collections/oolong-tea, /collections/rooibos-tea,
+   /collections/teapots-kettles, /collections/infusers-strainers,
+   /collections/tea-gift-sets-samplers, /collections/iced-tea-blends,
+   /collections/latte-friendly-teas
+3. 1–2 links to related Journal posts in the same cluster, always including the cluster
+   hub post when one exists.
+ANCHOR TEXT RULES: vary anchors naturally ("a caffeine-free chamomile blend",
+"our sleep & relaxation collection", "this bamboo matcha whisk set"). Never "click here",
+never repeat an anchor, never paste bare URLs.
+
+## CONTENT QUALITY (E-E-A-T)
+- Open with a 2–3 sentence direct answer, then expand.
+- Concrete numbers in every post: steep temperatures (°F/°C), steep times, leaf-to-water
+  ratios (g per 8oz), caffeine levels (mg ranges), resteep counts.
+- Write like a tea sommelier sharing tested brewing notes.
+- 1,200–1,800 words for guides; 600–900 for quick-fix posts. End with a 3–5 question FAQ.
+- Title under 60 characters; meta description 150–160 characters with the primary keyword.
+
+## DO NOT
+- No keyword stuffing, no fabricated studies or testimonials, no competitor names,
+- no medical claims (see HEALTH CLAIM SAFETY), max 6 internal links per post.
+"""
+
+
 def _strip_html(html):
     text = re.sub(r"<[^>]+>", " ", html)
     return re.sub(r"\s+", " ", text).strip()
@@ -147,7 +212,7 @@ def generate_draft(*, topic, date, post_type, subtype, cta, hub_links=None, env=
     env = env or load_env()
     sys_prompt = load_system_prompt()
     few_shot = _build_few_shot_block(load_few_shot_articles())
-    full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION
+    full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + "\n\n" + BLOG_WRITING_RULES
     user_msg = _build_user_prompt(date=date, topic=topic, post_type=post_type,
                                    subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=None)
     last_err = None
@@ -220,7 +285,7 @@ def revise(draft, critique, env, *, original_user_prompt):
     log("[Pass 3] revise")
     sys_prompt = load_system_prompt()
     few_shot = _build_few_shot_block(load_few_shot_articles())
-    full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION
+    full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + "\n\n" + BLOG_WRITING_RULES
     user_msg = (
         original_user_prompt + "\n\n"
         "## YOUR PREVIOUS DRAFT\n\n```json\n" + json.dumps(draft, ensure_ascii=False, indent=2) + "\n```\n\n"
@@ -242,7 +307,7 @@ def cross_review(revised, env):
     sys_prompt = load_system_prompt()
     few_shot = _build_few_shot_block(load_few_shot_articles())
     suffix = "\n\n## CROSS-MODEL FINAL POLISH\nFinal polish. Tighten weak sentences, fix subtle SEO, verify all hard rules. Return SAME JSON schema."
-    full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + suffix
+    full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + "\n\n" + BLOG_WRITING_RULES + suffix
     user_msg = "Polish this revised draft:\n\n```json\n" + json.dumps(revised, ensure_ascii=False, indent=2) + "\n```"
     def _call():
         return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=review_model,
