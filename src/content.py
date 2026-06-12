@@ -123,14 +123,39 @@ def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=
 
 
 def _extract_json(text):
-    fence = re.search(r"```(?:json)?\s*\n?(\{.*?\})\s*\n?```", text, re.DOTALL)
+    """Tolerant parse of the model's article JSON. Repairs common LLM malformations
+    (code fences, trailing commas, unescaped quotes / literal control chars in long
+    body_html) so a single bad character does not fail the whole article. Mirrors
+    _parse_gemini_json's cascade. Raises only if no recoverable object is present."""
+    if not text:
+        raise ValueError("No JSON in response (empty)")
+    raw = text.strip()
+    fence = re.search(r"```(?:json)?\s*\n?(\{.*\})\s*\n?```", raw, re.DOTALL)
     if fence:
-        return json.loads(fence.group(1))
-    start = text.find("{")
-    end = text.rfind("}")
-    if start >= 0 and end > start:
-        return json.loads(text[start:end+1])
-    raise ValueError("No JSON in response")
+        candidate = fence.group(1)
+    else:
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start < 0 or end <= start:
+            raise ValueError("No JSON in response")
+        candidate = raw[start:end + 1]
+    repaired = re.sub(r",(\s*[}\]])", r"\1", candidate)  # drop trailing commas
+    for attempt in (candidate, repaired):
+        for kw in ({}, {"strict": False}):  # strict=False tolerates literal control chars
+            try:
+                obj = json.loads(attempt, **kw)
+                if isinstance(obj, dict) and obj:
+                    return obj
+            except Exception:
+                pass
+    try:
+        import json_repair  # last resort: fixes unescaped quotes in long body_html
+        obj = json_repair.loads(candidate)
+        if isinstance(obj, dict) and obj:
+            return obj
+    except Exception:
+        pass
+    raise ValueError("No recoverable JSON object in response")
 
 
 OUTPUT_SCHEMA_INSTRUCTION = """OUTPUT FORMAT - return ONE JSON object with EXACTLY these fields:
