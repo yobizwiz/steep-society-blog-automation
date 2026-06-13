@@ -346,7 +346,7 @@ def cross_review(revised, env):
 GEMINI_REVIEW_SYSTEM = """You are an independent SEO + content reviewer for a Shopify lifestyle/wellness blog. Score the article on FIVE dimensions (0-10 each):
 
 1. **content_quality** — Distinct angle, specific actionable info, no fluff, original insight.
-2. **onpage_seo** — Meta title 50-60 chars, meta description 140-160, primary keyword in title/slug/meta/intro, 5-row table max.
+2. **onpage_seo** — Meta title 60 chars or fewer (short, punchy titles for how-to / quick-fix posts are GOOD — do NOT penalize a title for being under 50 chars). Meta description 150-160 ideal, 140-165 acceptable. Primary keyword in title/slug/meta/intro. Table max 5 data rows.
 3. **conversion_alignment** — Exactly ONE CTA block after Quick Recap whose button text matches its collection 1:1. NOTE: inline contextual collection/product links woven into body paragraphs are REQUIRED and GOOD — do NOT penalize them as "orphan mentions". An "orphan mention" is ONLY a product/collection named in text with NO link at all. TRUST the STRUCTURAL FACTS in the user message; never claim Quick Recap, the CTA, or JSON-LD is missing if the facts say it is present.
 4. **ai_search_optimization** — AI citation-friendly: Quick Answer in 1st-3rd paragraph, single-fact atomic sentences, numbers/measurements, FAQPage + Article JSON-LD inline in body. Optimized for ChatGPT/Perplexity/Google AI Overview citation.
 5. **eeat** — Google E-E-A-T quality signals: Experience (actual tested insights), Expertise (specific accurate data e.g. brewing temps), Authoritativeness (consistent brand voice), Trustworthiness (no factual errors, no contradictions).
