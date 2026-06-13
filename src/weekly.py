@@ -60,7 +60,15 @@ def process_one_day(date, env, sched, cols):
 
         result = validate(article, post_type=entry.get("type", "longtail"))
         summary["validation"] = {"violations": len(result["violations"]), "warnings": len(result["warnings"])}
-        summary["score"] = (article.get("internal_judgment") or {}).get("content_quality", {}).get("score")
+        try:
+            from content import combined_min_score
+            summary["score"] = combined_min_score(article)
+        except Exception:
+            summary["score"] = (article.get("internal_judgment") or {}).get("content_quality", {}).get("score")
+        _ij = article.get("internal_judgment") or {}
+        _dims = ("content_quality","onpage_seo","conversion_alignment","ai_search_optimization","eeat")
+        summary["anthropic_scores"] = {k: (_ij.get(k) or {}).get("score") for k in _dims}
+        summary["gemini_scores"] = {k: ((_ij.get("gemini_review") or {}).get(k) or {}).get("score") for k in _dims}
 
         log(f"\n--- {date}: 이미지 생성 ---")
         google_key = env["GOOGLE_API_KEY"]
