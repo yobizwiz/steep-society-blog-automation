@@ -331,7 +331,7 @@ def cross_review(revised, env):
     log("[Pass 4] cross-review (model=" + review_model + ")")
     sys_prompt = load_system_prompt()
     few_shot = _build_few_shot_block(load_few_shot_articles())
-    suffix = "\n\n## CROSS-MODEL FINAL POLISH\nFinal polish. Tighten weak sentences, fix subtle SEO, verify all hard rules. Return SAME JSON schema."
+    suffix = "\n\n## CROSS-MODEL FINAL POLISH\nFinal polish. Tighten weak sentences, fix subtle SEO, verify all hard rules. Return SAME JSON schema. ALWAYS include internal_judgment with ALL FIVE dimensions (content_quality, onpage_seo, conversion_alignment, ai_search_optimization, eeat) - never omit a dimension."
     full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + "\n\n" + BLOG_WRITING_RULES + suffix
     user_msg = "Polish this revised draft:\n\n```json\n" + json.dumps(revised, ensure_ascii=False, indent=2) + "\n```"
     def _call():
@@ -347,7 +347,7 @@ GEMINI_REVIEW_SYSTEM = """You are an independent SEO + content reviewer for a Sh
 
 1. **content_quality** — Distinct angle, specific actionable info, no fluff, original insight.
 2. **onpage_seo** — Meta title 50-60 chars, meta description 140-160, primary keyword in title/slug/meta/intro, 5-row table max.
-3. **conversion_alignment** — Single CTA after Quick Recap with collection-name-1:1 button text, no orphan product mentions, Quick Answer in first 2-3 paragraphs.
+3. **conversion_alignment** — Exactly ONE CTA block after Quick Recap whose button text matches its collection 1:1. NOTE: inline contextual collection/product links woven into body paragraphs are REQUIRED and GOOD — do NOT penalize them as "orphan mentions". An "orphan mention" is ONLY a product/collection named in text with NO link at all. TRUST the STRUCTURAL FACTS in the user message; never claim Quick Recap, the CTA, or JSON-LD is missing if the facts say it is present.
 4. **ai_search_optimization** — AI citation-friendly: Quick Answer in 1st-3rd paragraph, single-fact atomic sentences, numbers/measurements, FAQPage + Article JSON-LD inline in body. Optimized for ChatGPT/Perplexity/Google AI Overview citation.
 5. **eeat** — Google E-E-A-T quality signals: Experience (actual tested insights), Expertise (specific accurate data e.g. brewing temps), Authoritativeness (consistent brand voice), Trustworthiness (no factual errors, no contradictions).
 
@@ -423,14 +423,32 @@ def gemini_review(article, env):
     if not api_key:
         log("[Pass 4b] GOOGLE_API_KEY missing — skipping", "WARN")
         return None
-    body_excerpt = _strip_html(article.get("body_html",""))[:6000]
+    raw_body = article.get("body_html", "") or ""
+    body_excerpt = _strip_html(raw_body)
+    if len(body_excerpt) > 24000:
+        body_excerpt = body_excerpt[:24000] + " ...[truncated]"
+    _ns = raw_body.replace(" ", "")
+    _has_faq = '"@type":"FAQPage"' in _ns
+    _has_art = '"@type":"Article"' in _ns
+    _has_recap = "Quick Recap" in raw_body
+    _cta_n = len(re.findall(r"border-radius:\s*999px", raw_body))
+    _col_n = len(re.findall(r"/collections/[a-z0-9\-]+", raw_body))
+    facts_block = (
+        "STRUCTURAL FACTS (verified programmatically from raw HTML - TRUST THESE; do NOT deduct for a missing element the facts say is present):\n"
+        "- FAQPage JSON-LD present: " + str(_has_faq) + "\n"
+        "- Article JSON-LD present: " + str(_has_art) + "\n"
+        "- Quick Recap section present: " + str(_has_recap) + "\n"
+        "- CTA button count: " + str(_cta_n) + " (1 = correct single CTA)\n"
+        "- Inline collection links: " + str(_col_n) + " (REQUIRED by blog rules, NOT orphan mentions)\n"
+    )
     user_msg = (
         "Score this article. Be tough.\n\n"
         f"Title: {article.get('title','?')}\n"
         f"Meta title: {article.get('meta_title','?')}\n"
         f"Meta description: {article.get('meta_description','?')}\n"
         f"Slug: {article.get('url_slug','?')}\n\n"
-        f"Body (excerpt):\n{body_excerpt}"
+        f"{facts_block}\n"
+        f"Full body text:\n{body_excerpt}"
     )
     payload = {
         "contents": [{
