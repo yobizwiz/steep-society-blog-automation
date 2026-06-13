@@ -31,7 +31,7 @@ PERFECTION_SYS = (
     "5. NEVER remove content that earned a high score (e.g., don't drop FAQ if onpage_seo was 10).\n\n"
     "Specific guidance per low-scoring dimension:\n"
     "- content_quality < 10: Add specific data/numbers/research citations. Remove fluff. Add original first-person insight (e.g., '30-day test' framing).\n"
-    "- onpage_seo < 10: Fix meta title length (50-60), meta description (140-160), missing JSON-LD (FAQPage + Article), table > 5 rows trim, missing primary keyword in title/slug/meta/intro.\n"
+    "- onpage_seo < 10: Meta title <=60 chars (do NOT pad short how-to/quick-fix titles just to reach 50), meta description 150-160 (140-165 ok), missing JSON-LD (FAQPage + Article), table > 5 rows trim, missing primary keyword in title/slug/meta/intro.\n"
     "- conversion_alignment < 10: Move Quick Answer into first 2-3 paragraphs. Ensure single CTA below Quick Recap with collection-name-1:1 button. Remove orphan product mentions (link or remove).\n"
     "- ai_search_optimization < 10: Rewrite as single-fact atomic sentences with numbers (temperatures, ratios, times). Add anchor IDs to H2s. Inline FAQPage + Article JSON-LD.\n"
     "- eeat < 10: Add specific personal experience signals ('I tested X for 30 days', '5 different beans compared'). Use exact data (200°F, 3-5 min, 1:16 ratio). Cite study/journal names when relevant. Consistent brand voice.\n\n"
