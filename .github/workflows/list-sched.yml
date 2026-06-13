@@ -1,0 +1,19 @@
+name: List Scheduled Articles (one-off)
+on: { workflow_dispatch: {} }
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install -r requirements.txt
+      - name: Create api-keys.txt
+        run: |
+          cat > api-keys.txt <<'EOF'
+          SHOPIFY_STORE_URL=${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
+          EOF
+      - run: python src/list_sched.py
