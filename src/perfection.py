@@ -40,7 +40,8 @@ PERFECTION_SYS = (
     "- Maintain ALL hard rules (no h1, table max 5 data rows, single CTA after Quick Recap, absolute URLs, F/C notation, exact image counts).\n"
     "- page_judgment excludes Shopify template-level deductions.\n\n"
     "Return the SAME JSON schema with improvements applied. "
-    "If you genuinely cannot improve a dimension further, KEEP the existing body for that section verbatim."
+    "If you genuinely cannot improve a dimension further, KEEP the existing body for that section verbatim. "
+    "ALWAYS return internal_judgment with ALL FIVE dimensions scored (content_quality, onpage_seo, conversion_alignment, ai_search_optimization, eeat) - never omit a dimension."
 )
 
 
