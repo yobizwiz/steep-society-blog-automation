@@ -1,31 +1,31 @@
 #!/usr/bin/env python3
-"""One-off: list all blog articles with publish date + status (incl. scheduled)."""
+"""One-off: list ALL blog articles incl. scheduled via REST published_status=any."""
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_env
-from shopify_pub import _gql
+from shopify_pub import _api, get_blog_id
 
 def main():
     env = load_env()
-    q = ('{ articles(first: 100, sortKey: PUBLISHED_AT, reverse: true) '
-         '{ edges { node { title handle publishedAt isPublished } } } }')
-    edges = _gql(env, q).get("articles", {}).get("edges", [])
+    blog_id = get_blog_id(env, env["SHOPIFY_BLOG_HANDLE"])
+    arts = _api(env, f"blogs/{blog_id}/articles.json?limit=250&published_status=any")["articles"]
     rows = []
-    for e in edges:
-        n = e.get("node") or {}
-        pub = n.get("publishedAt") or ""
-        rows.append((pub, n.get("isPublished"), n.get("handle"), (n.get("title") or "")[:48]))
-    june = [r for r in rows if r[0].startswith("2026-06")]
-    print(f"TOTAL articles fetched: {len(rows)} | June 2026: {len(june)}")
-    print("-"*92)
-    for pub, isp, handle, title in sorted(june):
-        flag = "LIVE " if isp else "SCHED"
-        print(f"{pub[:16]}  [{flag}]  {handle:46}  {title}")
-    print("-"*92)
-    # explicit 6/13 check
-    found = [r for r in rows if r[0].startswith("2026-06-13")]
-    print("6/13 articles:", [(r[2], 'LIVE' if r[1] else 'SCHED', r[0]) for r in found] or "NONE FOUND")
+    for a in arts:
+        pub = a.get("published_at") or ""
+        rows.append((pub, bool(a.get("published_at")) and a.get("published_at") <= "2026-06-13T06:40", a.get("handle"), (a.get("title") or "")[:46], a.get("published_at")))
+    june = [a for a in arts if (a.get("published_at") or "").startswith("2026-06") or (a.get("created_at") or "").startswith("2026-06")]
+    print(f"TOTAL articles: {len(arts)} | June-related: {len(june)}")
+    print("-"*96)
+    def key(a): return a.get("published_at") or a.get("created_at") or ""
+    for a in sorted(june, key=key):
+        pa = a.get("published_at")
+        status = "LIVE " if pa and pa <= "2026-06-13T06:40:00Z" else ("SCHED" if pa else "DRAFT")
+        print(f"pub={str(pa)[:16]:16} [{status}]  {a.get('handle','')[:44]:44} {(a.get('title') or '')[:40]}")
+    print("-"*96)
+    for d in ["2026-06-13","2026-06-14","2026-06-15"]:
+        hit = [a for a in arts if (a.get("published_at") or "").startswith(d)]
+        print(f"{d}: " + (", ".join(f"{a.get('handle')} (pub={a.get('published_at')})" for a in hit) if hit else "NONE"))
 
 if __name__ == "__main__":
     main()
