@@ -1,0 +1,197 @@
+# 마진 연동 조준표 (Steep). SERA는 추후 'sera:' 섹션 추가로 확장.
+# 구조: <shop>.clusters.<cluster> = {collections, hero:[{handle,title,button}], bait:[{brand,handle?}]}
+# hero=주력(Our Pick·CTA 직링크), bait=미끼(브랜드 앵커). 저재고 제외: b00ngykmqy, b0cs2z455v
+
+steep:
+  clusters:
+    matcha-tools:
+      collections:
+      - matcha
+      - matcha-essentials-tools
+      - premium-ceremonial-tea
+      hero:
+      - handle: nippon-matcha-organic-premium-ceremonial-grade-japanese-matcha-green-tea-powder-first-harvest-from-uji-kyoto-usda-certified-stone-ground-smooth-vibrant-100g-3-53oz
+        title: Nippon Matcha - Organic Premium Ceremonial (Uji, Kyoto)
+        button: 'Shop our pick: Nippon ceremonial matcha'
+      - handle: b0cn39k6k7
+        title: Naoki Matcha Complete Ceremony Set
+        button: Shop the Naoki matcha ceremony set
+      - handle: b08vd5nc7w
+        title: Dujust Japanese Tea Set
+        button: Shop the Dujust Japanese tea set
+      bait:
+      - brand: Soar Organics
+        handle: soar-organics-uji-ceremonial-grade-matcha-green-tea-powder-authentic-japanese-origin-3-52-oz
+      - brand: Davidson's Organics
+    gift-sampler:
+      collections:
+      - tea-gift-sets-samplers
+      - tea-samplers-variety-packs
+      - lifestyle-gifting-collections
+      hero:
+      - handle: teabloom-worlds-finest-pyramid-tea-collection-24-varieties-of-usda-certified-organic-kosher-teas-black-tea-green-tea-white-tea-oolong-tea-and-herbal-fruit-tea-blends
+        title: Teabloom World's Finest Pyramid Tea Collection (24)
+        button: 'Shop our pick: Teabloom 24-tea collection'
+      - handle: vahdam-luxury-tea-gift-set-24-unique-loose-leaf-teas-in-tin-caddies-premium-tea-gift-box-gluten-free-non-gmo-gifts-for-women-men-adults
+        title: VAHDAM Luxury Tea Gift Set (24 caddies)
+        button: Shop the VAHDAM luxury gift set
+      - handle: vahdam-world-top-20-favourites-tea-sampler-set-loose-leaf-tea-100-cups-tea-variety-pack-with-green-herbal-black-chai-brew-vacuum-sealed-for-freshness-brew-hot-cold
+        title: VAHDAM World Top 20 Sampler
+        button: Shop the VAHDAM Top-20 sampler
+      bait:
+      - brand: Heavenly Tea Leaves
+        handle: heavenly-tea-leaves-organic-herbal-loose-leaf-tea-sampler-gift-set-approx-90-cups-9-flavor-variety-pack-naturally-caffeine-free-tisanes-assorted-herbal-teas-hot-or-iced
+      - brand: TWG
+    black-earlgrey:
+      collections:
+      - black-tea
+      - earl-grey-tea
+      - english-breakfast-tea
+      hero:
+      - handle: vahdam-first-flush-darjeeling-tea-170-cups-340g-12oz-loose-leaf-black-tea-flowery-aromatic-delicious-mellow-fragrant-vacuum-sealed-pack
+        title: VAHDAM First Flush Darjeeling
+        button: 'Shop our pick: VAHDAM First Flush Darjeeling'
+      - handle: dammann-freres-satchets-darjeeling-tea-bags-premium-french-gourmet-black-tea-individually-wrapped-24-count-single-pack
+        title: Dammann Freres Darjeeling Sachets
+        button: Shop the Dammann Darjeeling sachets
+      - handle: b00vfypg1s
+        title: VAHDAM Darjeeling Loose Leaf (340g)
+        button: Shop the VAHDAM Darjeeling loose leaf
+      bait:
+      - brand: Clipper
+        handle: b0f1g6g3cw
+      - brand: Bright Tea Co Earl Grey
+    teapot-kettle:
+      collections:
+      - teapots-kettles
+      - tea-accessories-ritual-tools
+      - infusers-strainers
+      - tea-storage-canisters
+      hero:
+      - handle: b0bfttxkfg
+        title: Viante Electric Kettle with Infuser
+        button: 'Shop our pick: Viante electric kettle'
+      - handle: b09mz51lz2
+        title: suyika Japanese Cast-Iron Tetsubin
+        button: Shop the suyika cast-iron teapot
+      - handle: b0bf53dnfx
+        title: 2.1Qt Whistling Stovetop Kettle
+        button: Shop the stovetop whistling kettle
+      bait:
+      - brand: Caraway
+        handle: b0bchc3tqv
+      - brand: MacKenzie-Childs
+    chai:
+      collections:
+      - chai
+      hero:
+      - handle: b00m0yll6q
+        title: Republic of Tea Republic Chai (250)
+        button: 'Shop our pick: Republic Chai (250-ct)'
+      - handle: b00t3b323e
+        title: Tiesta Tea Chai Love Loose Leaf
+        button: Shop the Tiesta Chai Love loose leaf
+      - handle: b0cs2z455v
+        title: Brewix Masala Chai Loose Leaf
+        button: Shop the Brewix masala chai
+      bait:
+      - brand: Tiesta Cozy Chai Rooibos
+        handle: b0ckbtg2kd
+      - brand: Numi
+    wellness:
+      collections:
+      - sleep-relaxation-tea
+      - functional-wellness-tea
+      - detox-cleanse-tea
+      - digestive-health-tea
+      - focus-energy-tea
+      - daily-comfort-tea
+      hero:
+      - handle: b084r71hrd
+        title: Organic India Tulsi Hibiscus
+        button: 'Shop our pick: Organic India Tulsi Hibiscus'
+      - handle: b0cm3znghm
+        title: Teami 30-Day Herbal Teatox
+        button: Shop the Teami 30-day herbal set
+      - handle: b00ngykmqy
+        title: Teami 30-Day Tea Pack
+        button: Shop the Teami 30-day tea pack
+      bait:
+      - brand: The Republic of Tea
+        handle: b096g84rqd
+      - brand: Vinia
+    green:
+      collections:
+      - green-tea
+      hero:
+      - handle: fullchea-longjing-tea-dragonwell-tea-chinese-green-tea-loose-leaf-toasty-bean-aromatic-lung-ching-dragon-well-8-8oz-250g
+        title: FullChea Longjing Dragonwell
+        button: 'Shop our pick: FullChea Longjing Dragonwell'
+      - handle: english-tea-shop-organic-sencha-green-tea-20-tea-bag-sachets-30g
+        title: English Tea Shop Organic Sencha
+        button: Shop the English Tea Shop sencha
+      - handle: twinings-pure-green-tea-individually-wrapped-bags-100-count-pack-of-1-smooth-refreshing-caffeinated-enjoy-hot-or-iced-100-teabags
+        title: Twinings Pure Green Tea (100)
+        button: Shop the Twinings pure green tea
+      bait:
+      - brand: Generic organic value pack
+        handle: premium-organic-green-tea-value-pack-160-ct
+      - brand: Starwest Botanicals
+    herbal-caffeinefree:
+      collections:
+      - organic-caffeine-free-tea
+      - chamomile-tea
+      - herbal-botanical-tea
+      - rooibos-tea
+      - mixed-herbal-blends
+      - hibiscus-tea
+      hero:
+      - handle: b0b8jcjtlp
+        title: Teeccino Mocha Chicory (caffeine-free)
+        button: 'Shop our pick: Teeccino chicory brew'
+      - handle: b08g2j583h
+        title: VAHDAM Chamomile (100 pyramids)
+        button: Shop the VAHDAM chamomile
+      - handle: yogi-tea-fruity-tea-variety-sampler-16-tea-bags-per-pack-6-packs-black-green-herbal-assorted-flavors-sweet-clementine-blackberry-tangerine-lemon-strawberry-mango-more
+        title: Yogi Fruity Tea Variety Sampler
+        button: Shop the Yogi fruity sampler
+      bait:
+      - brand: Tiesta Pumpkin Spice Rooibos
+        handle: b0cf632vgz
+      - brand: Grace Farms
+    fruit-iced:
+      collections:
+      - fruit-tropical-tea-blends
+      - iced-tea-blends
+      - citrus-lemon-tea
+      hero:
+      - handle: luzianne-green-tea-bags-family-size-24ct-box-pack-of-6
+        title: Luzianne Green Iced Tea (family size)
+        button: 'Shop our pick: Luzianne iced green tea'
+      - handle: dammann-freres-sachets-jardin-bleu-tea-bags-premium-gourmet-french-black-tea-blend-strawberry-rhubarb-flavors-25-count-single-pack
+        title: Dammann Jardin Bleu (strawberry-rhubarb)
+        button: Shop the Dammann Jardin Bleu
+      - handle: tiesta-tea-sour-green-apple-loose-leaf-tart-apple-green-tea-medium-caffeinated-blend-makes-hot-or-iced-up-to-40-50-cups-4oz-refillable-tin
+        title: Tiesta Sour Green Apple
+        button: Shop the Tiesta sour green apple
+      bait:
+      - brand: Grace Farms Lemon Ginger
+        handle: b0f8p91vjq
+      - brand: Tiesta Lemon Black
+    onthego:
+      collections:
+      - instant-and-on-the-go-teas
+      hero:
+      - handle: honsei-instant-ginger-honey-tea-40-count
+        title: Honsei Instant Ginger Honey (40)
+        button: 'Shop our pick: Honsei instant ginger honey'
+      - handle: yerba-mate-peach-mango-drink-mix-instant-tea-powder-with-natural-caffeine-probiotics-for-gut-health-focus-cortisol-levels-immunity-30-servings-clean-energy-drink-powdered-no-crash-sugar-free
+        title: Yerba Mate Peach-Mango Instant Mix
+        button: Shop the yerba mate peach-mango mix
+      - handle: happy-belly-tea-pods-compatible-with-2-0-k-cup-brewers-green-tea-24-count-previously-solimo
+        title: Happy Belly Green Tea K-Cup Pods (24)
+        button: Shop the Happy Belly green tea pods
+      bait:
+      - brand: Coconut Cloud Chai Latte
+        handle: b099nwwy8t
+      - brand: Oregon Chai

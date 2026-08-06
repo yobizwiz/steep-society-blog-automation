@@ -1,11 +1,3 @@
-# Steep Society 블로그 발행 스케줄 (2026-02-11 ~ 2026-12-31)
-# 형식: YYYY-MM-DD: { title, type, hub, cta_collection }
-# type: hub | longtail | quickfix | comparison | pairing
-# hub: 이 글이 연결되는 허브 글의 날짜 (해당 시)
-# cta_collection: 해당 글에 사용할 CTA 컬렉션 핸들 (collections.yaml의 키)
-
-# === 2026년 4월 ===
-# === 2026년 4월 28-29 (복구 필요) ===
 "2026-04-28":
   title: "Tea Sampler vs Full Box: What to Buy First"
   type: longtail
@@ -433,15 +425,21 @@
 "2026-08-10":
   type: "longtail"
   title: "Tea for Desk Drawers"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "onthego"
+  cta_product: "honsei-instant-ginger-honey-tea-40-count"
 "2026-08-11":
   type: "longtail"
   title: "Matcha vs Black Tea for Focus"
-  cta_collection: "matcha"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "nippon-matcha-organic-premium-ceremonial-grade-japanese-matcha-green-tea-powder-first-harvest-from-uji-kyoto-usda-certified-stone-ground-smooth-vibrant-100g-3-53oz"
 "2026-08-12":
   type: "longtail"
   title: "Tea for Calm Productivity"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b084r71hrd"
 "2026-08-13":
   type: "hub"
   title: "Focus Tea Hub"
@@ -453,7 +451,9 @@
 "2026-08-15":
   type: "longtail"
   title: "Best Tea for Cooler August Nights"
-  cta_collection: "sleep_relaxation"
+  funnel: "commercial"
+  cluster: "herbal-caffeinefree"
+  cta_product: "b0b8jcjtlp"
 "2026-08-16":
   type: "longtail"
   title: "Summer-to-Fall Tea Shelf Refresh"
@@ -465,7 +465,9 @@
 "2026-08-18":
   type: "longtail"
   title: "Tea Storage After Summer"
-  cta_collection: "tea_storage_canisters"
+  funnel: "commercial"
+  cluster: "fruit-iced"
+  cta_product: "luzianne-green-tea-bags-family-size-24ct-box-pack-of-6"
 "2026-08-19":
   type: "quickfix"
   title: "Does Tea Go Stale Faster in Heat?"
@@ -473,11 +475,15 @@
 "2026-08-20":
   type: "longtail"
   title: "How to Clean Up Your Tea Shelf"
-  cta_collection: "tea_storage_canisters"
+  funnel: "commercial"
+  cluster: "green"
+  cta_product: "fullchea-longjing-tea-dragonwell-tea-chinese-green-tea-loose-leaf-toasty-bean-aromatic-lung-ching-dragon-well-8-8oz-250g"
 "2026-08-21":
   type: "longtail"
   title: "Tea Shelf Organization Guide"
-  cta_collection: "tea_storage_canisters"
+  funnel: "commercial"
+  cluster: "fruit-iced"
+  cta_product: "dammann-freres-sachets-jardin-bleu-tea-bags-premium-gourmet-french-black-tea-blend-strawberry-rhubarb-flavors-25-count-single-pack"
 "2026-08-22":
   type: "hub"
   title: "Tea Storage and Organization Hub"
@@ -485,15 +491,21 @@
 "2026-08-23":
   type: "longtail"
   title: "Best Tea for Late Summer Brunch"
-  cta_collection: "lifestyle_gifting"
+  funnel: "commercial"
+  cluster: "onthego"
+  cta_product: "yerba-mate-peach-mango-drink-mix-instant-tea-powder-with-natural-caffeine-probiotics-for-gut-health-focus-cortisol-levels-immunity-30-servings-clean-energy-drink-powdered-no-crash-sugar-free"
 "2026-08-24":
   type: "longtail"
   title: "Tea Pairings for Stone Fruit"
-  cta_collection: "fruity_tropical_tea"
+  funnel: "commercial"
+  cluster: "fruit-iced"
+  cta_product: "tiesta-tea-sour-green-apple-loose-leaf-tart-apple-green-tea-medium-caffeinated-blend-makes-hot-or-iced-up-to-40-50-cups-4oz-refillable-tin"
 "2026-08-25":
   type: "longtail"
   title: "Tea Pairings for Light Desserts"
-  cta_collection: "sweet_dessert"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "b0cn39k6k7"
 "2026-08-26":
   type: "pairing"
   title: "Late Summer Tea Pairing Guide"
@@ -505,11 +517,15 @@
 "2026-08-28":
   type: "longtail"
   title: "Tea Sampler vs Restocking Favorites"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "teabloom-worlds-finest-pyramid-tea-collection-24-varieties-of-usda-certified-organic-kosher-teas-black-tea-green-tea-white-tea-oolong-tea-and-herbal-fruit-tea-blends"
 "2026-08-29":
   type: "longtail"
   title: "Best Tea Samplers for Fall Preview"
-  cta_collection: "tea_samplers_variety_packs"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-luxury-tea-gift-set-24-unique-loose-leaf-teas-in-tin-caddies-premium-tea-gift-box-gluten-free-non-gmo-gifts-for-women-men-adults"
 "2026-08-30":
   type: "longtail"
   title: "What Tea to Buy Before Fall"
@@ -517,19 +533,27 @@
 "2026-08-31":
   type: "longtail"
   title: "August Tea Routine Wrap-Up"
-  cta_collection: "daily_comfort"
+  funnel: "commercial"
+  cluster: "black-earlgrey"
+  cta_product: "vahdam-first-flush-darjeeling-tea-170-cups-340g-12oz-loose-leaf-black-tea-flowery-aromatic-delicious-mellow-fragrant-vacuum-sealed-pack"
 "2026-09-01":
   type: "longtail"
   title: "Best Tea for Early Fall"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b0cm3znghm"
 "2026-09-02":
   type: "longtail"
   title: "Green Tea vs Black Tea for Fall Mornings"
-  cta_collection: "green_tea"
+  funnel: "commercial"
+  cluster: "black-earlgrey"
+  cta_product: "dammann-freres-satchets-darjeeling-tea-bags-premium-french-gourmet-black-tea-individually-wrapped-24-count-single-pack"
 "2026-09-03":
   type: "longtail"
   title: "Best Tea for Back-to-School Focus"
-  cta_collection: "focus_energy"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "b08vd5nc7w"
 "2026-09-04":
   type: "hub"
   title: "Early Fall Tea Hub"
@@ -545,11 +569,15 @@
 "2026-09-07":
   type: "longtail"
   title: "Labor Day Tea Ideas"
-  cta_collection: "lifestyle_gifting"
+  funnel: "commercial"
+  cluster: "teapot-kettle"
+  cta_product: "b0bfttxkfg"
 "2026-09-08":
   type: "longtail"
   title: "Tea for Busy Fall Schedules"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "chai"
+  cta_product: "b00m0yll6q"
 "2026-09-09":
   type: "hub"
   title: "Focus and Routine Tea Hub"
@@ -557,11 +585,15 @@
 "2026-09-10":
   type: "longtail"
   title: "Best Tea for Cooler Evenings"
-  cta_collection: "sleep_relaxation"
+  funnel: "commercial"
+  cluster: "herbal-caffeinefree"
+  cta_product: "b08g2j583h"
 "2026-09-11":
   type: "longtail"
   title: "Caffeine-Free Tea for Fall Nights"
-  cta_collection: "organic_caffeine_free"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b084r71hrd"
 "2026-09-12":
   type: "longtail"
   title: "Chamomile vs Rooibos for Evening"
@@ -573,15 +605,21 @@
 "2026-09-14":
   type: "longtail"
   title: "Best Herbal Tea for Fall Comfort"
-  cta_collection: "herbal_botanical"
+  funnel: "commercial"
+  cluster: "green"
+  cta_product: "english-tea-shop-organic-sencha-green-tea-20-tea-bag-sachets-30g"
 "2026-09-15":
   type: "longtail"
   title: "Ginger Tea for Cooler Days"
-  cta_collection: "ginger_tea"
+  funnel: "commercial"
+  cluster: "onthego"
+  cta_product: "happy-belly-tea-pods-compatible-with-2-0-k-cup-brewers-green-tea-24-count-previously-solimo"
 "2026-09-16":
   type: "longtail"
   title: "Turmeric Tea for Fall"
-  cta_collection: "spiced_teas"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "nippon-matcha-organic-premium-ceremonial-grade-japanese-matcha-green-tea-powder-first-harvest-from-uji-kyoto-usda-certified-stone-ground-smooth-vibrant-100g-3-53oz"
 "2026-09-17":
   type: "hub"
   title: "Herbal Fall Tea Hub"
@@ -589,7 +627,9 @@
 "2026-09-18":
   type: "longtail"
   title: "Chai Tea Season: What to Know"
-  cta_collection: "chai"
+  funnel: "commercial"
+  cluster: "chai"
+  cta_product: "b00t3b323e"
 "2026-09-19":
   type: "longtail"
   title: "Best Spiced Tea for Fall"
@@ -605,15 +645,21 @@
 "2026-09-22":
   type: "longtail"
   title: "First Day of Fall Tea Routine"
-  cta_collection: "daily_comfort"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-world-top-20-favourites-tea-sampler-set-loose-leaf-tea-100-cups-tea-variety-pack-with-green-herbal-black-chai-brew-vacuum-sealed-for-freshness-brew-hot-cold"
 "2026-09-23":
   type: "longtail"
   title: "Tea Shelf Reset for Fall"
-  cta_collection: "detox_cleanse"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b0cm3znghm"
 "2026-09-24":
   type: "longtail"
   title: "How to Store Tea for Cooler Weather"
-  cta_collection: "tea_storage_canisters"
+  funnel: "commercial"
+  cluster: "black-earlgrey"
+  cta_product: "b00vfypg1s"
 "2026-09-25":
   type: "quickfix"
   title: "Fall Tea Storage Quick Fix"
@@ -625,23 +671,33 @@
 "2026-09-27":
   type: "longtail"
   title: "Best Tea With Apple Desserts"
-  cta_collection: "fruity_tropical_tea"
+  funnel: "commercial"
+  cluster: "fruit-iced"
+  cta_product: "luzianne-green-tea-bags-family-size-24ct-box-pack-of-6"
 "2026-09-28":
   type: "longtail"
   title: "Tea Pairings for Pumpkin and Spice"
-  cta_collection: "fruity_tropical_tea"
+  funnel: "commercial"
+  cluster: "teapot-kettle"
+  cta_product: "b09mz51lz2"
 "2026-09-29":
   type: "longtail"
   title: "Best Tea for Fall Brunch"
-  cta_collection: "lifestyle_gifting"
+  funnel: "commercial"
+  cluster: "green"
+  cta_product: "twinings-pure-green-tea-individually-wrapped-bags-100-count-pack-of-1-smooth-refreshing-caffeinated-enjoy-hot-or-iced-100-teabags"
 "2026-09-30":
   type: "longtail"
   title: "September Tea Routine Wrap-Up"
-  cta_collection: "daily_comfort"
+  funnel: "commercial"
+  cluster: "herbal-caffeinefree"
+  cta_product: "yogi-tea-fruity-tea-variety-sampler-16-tea-bags-per-pack-6-packs-black-green-herbal-assorted-flavors-sweet-clementine-blackberry-tangerine-lemon-strawberry-mango-more"
 "2026-10-01":
   type: "longtail"
   title: "Best Fall Tea Blends"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "black-earlgrey"
+  cta_product: "vahdam-first-flush-darjeeling-tea-170-cups-340g-12oz-loose-leaf-black-tea-flowery-aromatic-delicious-mellow-fragrant-vacuum-sealed-pack"
 "2026-10-02":
   type: "longtail"
   title: "Best Caffeine-Free Tea for Fall"
@@ -661,11 +717,15 @@
 "2026-10-06":
   type: "longtail"
   title: "Best Tea for Cozy Mornings"
-  cta_collection: "focus_energy"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b084r71hrd"
 "2026-10-07":
   type: "longtail"
   title: "How to Make a Better Chai Latte at Home"
-  cta_collection: "chai"
+  funnel: "commercial"
+  cluster: "chai"
+  cta_product: "b00m0yll6q"
 "2026-10-08":
   type: "hub"
   title: "Chai Tea Basics Hub"
@@ -673,11 +733,15 @@
 "2026-10-09":
   type: "longtail"
   title: "Best Tea for Fall Desserts"
-  cta_collection: "sweet_dessert"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "b0cn39k6k7"
 "2026-10-10":
   type: "longtail"
   title: "Tea Pairings for Apple Pie"
-  cta_collection: "fruity_tropical_tea"
+  funnel: "commercial"
+  cluster: "fruit-iced"
+  cta_product: "dammann-freres-sachets-jardin-bleu-tea-bags-premium-gourmet-french-black-tea-blend-strawberry-rhubarb-flavors-25-count-single-pack"
 "2026-10-11":
   type: "longtail"
   title: "Tea Pairings for Pumpkin Desserts"
@@ -689,15 +753,21 @@
 "2026-10-13":
   type: "longtail"
   title: "Best Tea for Cool Weather Evenings"
-  cta_collection: "sleep_relaxation"
+  funnel: "commercial"
+  cluster: "herbal-caffeinefree"
+  cta_product: "b0b8jcjtlp"
 "2026-10-14":
   type: "longtail"
   title: "Rooibos Tea for Fall"
-  cta_collection: "rooibos_tea"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b0cm3znghm"
 "2026-10-15":
   type: "longtail"
   title: "Chamomile Tea for Cozy Nights"
-  cta_collection: "chamomile_tea"
+  funnel: "commercial"
+  cluster: "herbal-caffeinefree"
+  cta_product: "b08g2j583h"
 "2026-10-16":
   type: "hub"
   title: "Evening Comfort Tea Hub"
@@ -705,7 +775,9 @@
 "2026-10-17":
   type: "longtail"
   title: "Best Tea Gifts for Fall"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "teabloom-worlds-finest-pyramid-tea-collection-24-varieties-of-usda-certified-organic-kosher-teas-black-tea-green-tea-white-tea-oolong-tea-and-herbal-fruit-tea-blends"
 "2026-10-18":
   type: "longtail"
   title: "Tea Samplers for Cozy Season"
@@ -713,7 +785,9 @@
 "2026-10-19":
   type: "longtail"
   title: "How to Build a Fall Tea Flight"
-  cta_collection: "flavor_aroma"
+  funnel: "commercial"
+  cluster: "teapot-kettle"
+  cta_product: "b0bf53dnfx"
 "2026-10-20":
   type: "hub"
   title: "Fall Tea Discovery Hub"
@@ -725,11 +799,15 @@
 "2026-10-22":
   type: "longtail"
   title: "Best Tea for Halloween Treats"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "black-earlgrey"
+  cta_product: "dammann-freres-satchets-darjeeling-tea-bags-premium-french-gourmet-black-tea-individually-wrapped-24-count-single-pack"
 "2026-10-23":
   type: "longtail"
   title: "Spiced Tea vs Dessert Tea"
-  cta_collection: "iced_tea_blends"
+  funnel: "commercial"
+  cluster: "green"
+  cta_product: "fullchea-longjing-tea-dragonwell-tea-chinese-green-tea-loose-leaf-toasty-bean-aromatic-lung-ching-dragon-well-8-8oz-250g"
 "2026-10-24":
   type: "pairing"
   title: "Halloween Tea Pairing Guide"
@@ -741,19 +819,27 @@
 "2026-10-26":
   type: "longtail"
   title: "Best Tea for Movie Nights"
-  cta_collection: "sleep_relaxation"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b084r71hrd"
 "2026-10-27":
   type: "longtail"
   title: "Tea for Rainy Days"
-  cta_collection: "daily_comfort"
+  funnel: "commercial"
+  cluster: "chai"
+  cta_product: "b00t3b323e"
 "2026-10-28":
   type: "longtail"
   title: "How to Refresh Your Tea Shelf for Cozy Season"
-  cta_collection: "daily_comfort"
+  funnel: "commercial"
+  cluster: "fruit-iced"
+  cta_product: "tiesta-tea-sour-green-apple-loose-leaf-tart-apple-green-tea-medium-caffeinated-blend-makes-hot-or-iced-up-to-40-50-cups-4oz-refillable-tin"
 "2026-10-29":
   type: "longtail"
   title: "Best Tea Before the Holidays"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "b08vd5nc7w"
 "2026-10-30":
   type: "longtail"
   title: "October Tea Routine Checklist"
@@ -769,11 +855,15 @@
 "2026-11-02":
   type: "longtail"
   title: "Best Tea for Thanksgiving Dinner"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-luxury-tea-gift-set-24-unique-loose-leaf-teas-in-tin-caddies-premium-tea-gift-box-gluten-free-non-gmo-gifts-for-women-men-adults"
 "2026-11-03":
   type: "longtail"
   title: "Tea Pairings for Thanksgiving Desserts"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b0cm3znghm"
 "2026-11-04":
   type: "hub"
   title: "Thanksgiving Tea Hub"
@@ -781,11 +871,15 @@
 "2026-11-05":
   type: "longtail"
   title: "Best Tea With Pumpkin Pie"
-  cta_collection: "fruity_tropical_tea"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "nippon-matcha-organic-premium-ceremonial-grade-japanese-matcha-green-tea-powder-first-harvest-from-uji-kyoto-usda-certified-stone-ground-smooth-vibrant-100g-3-53oz"
 "2026-11-06":
   type: "longtail"
   title: "Best Tea With Apple Pie"
-  cta_collection: "fruity_tropical_tea"
+  funnel: "commercial"
+  cluster: "fruit-iced"
+  cta_product: "luzianne-green-tea-bags-family-size-24ct-box-pack-of-6"
 "2026-11-07":
   type: "longtail"
   title: "Black Tea vs Rooibos for Desserts"
@@ -797,15 +891,21 @@
 "2026-11-09":
   type: "longtail"
   title: "Best Tea Gifts for the Holidays"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-world-top-20-favourites-tea-sampler-set-loose-leaf-tea-100-cups-tea-variety-pack-with-green-herbal-black-chai-brew-vacuum-sealed-for-freshness-brew-hot-cold"
 "2026-11-10":
   type: "longtail"
   title: "Tea Gift Sets for Beginners"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "teabloom-worlds-finest-pyramid-tea-collection-24-varieties-of-usda-certified-organic-kosher-teas-black-tea-green-tea-white-tea-oolong-tea-and-herbal-fruit-tea-blends"
 "2026-11-11":
   type: "longtail"
   title: "Tea Samplers for Holiday Gifting"
-  cta_collection: "tea_samplers_variety_packs"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-luxury-tea-gift-set-24-unique-loose-leaf-teas-in-tin-caddies-premium-tea-gift-box-gluten-free-non-gmo-gifts-for-women-men-adults"
 "2026-11-12":
   type: "hub"
   title: "Holiday Tea Gift Hub"
@@ -813,7 +913,9 @@
 "2026-11-13":
   type: "longtail"
   title: "How to Pick a Tea Gift Without Guessing"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-world-top-20-favourites-tea-sampler-set-loose-leaf-tea-100-cups-tea-variety-pack-with-green-herbal-black-chai-brew-vacuum-sealed-for-freshness-brew-hot-cold"
 "2026-11-14":
   type: "longtail"
   title: "Best Caffeine-Free Tea Gifts"
@@ -825,19 +927,27 @@
 "2026-11-16":
   type: "longtail"
   title: "Holiday Tea Gift Guide"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "teabloom-worlds-finest-pyramid-tea-collection-24-varieties-of-usda-certified-organic-kosher-teas-black-tea-green-tea-white-tea-oolong-tea-and-herbal-fruit-tea-blends"
 "2026-11-17":
   type: "longtail"
   title: "Best Tea for Cozy Evenings"
-  cta_collection: "sleep_relaxation"
+  funnel: "commercial"
+  cluster: "herbal-caffeinefree"
+  cta_product: "yogi-tea-fruity-tea-variety-sampler-16-tea-bags-per-pack-6-packs-black-green-herbal-assorted-flavors-sweet-clementine-blackberry-tangerine-lemon-strawberry-mango-more"
 "2026-11-18":
   type: "longtail"
   title: "Chai vs Rooibos for Cold Weather"
-  cta_collection: "chai"
+  funnel: "commercial"
+  cluster: "chai"
+  cta_product: "b00m0yll6q"
 "2026-11-19":
   type: "longtail"
   title: "Herbal Tea for Winter Prep"
-  cta_collection: "herbal_botanical"
+  funnel: "commercial"
+  cluster: "black-earlgrey"
+  cta_product: "b00vfypg1s"
 "2026-11-20":
   type: "hub"
   title: "Cozy Tea Routine Hub"
@@ -853,19 +963,27 @@
 "2026-11-23":
   type: "longtail"
   title: "Make-Ahead Tea for Holiday Hosting"
-  cta_collection: "lifestyle_gifting"
+  funnel: "commercial"
+  cluster: "teapot-kettle"
+  cta_product: "b0bfttxkfg"
 "2026-11-24":
   type: "longtail"
   title: "Thanksgiving Hosting Tea Guide"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b084r71hrd"
 "2026-11-25":
   type: "longtail"
   title: "Last-Minute Thanksgiving Tea Ideas"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "b0cn39k6k7"
 "2026-11-26":
   type: "longtail"
   title: "Thanksgiving Tea Pairings"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "black-earlgrey"
+  cta_product: "vahdam-first-flush-darjeeling-tea-170-cups-340g-12oz-loose-leaf-black-tea-flowery-aromatic-delicious-mellow-fragrant-vacuum-sealed-pack"
 "2026-11-27":
   type: "longtail"
   title: "Black Friday Tea Gift Guide"
@@ -881,19 +999,27 @@
 "2026-11-30":
   type: "longtail"
   title: "Cyber Monday Tea Gift Ideas"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-luxury-tea-gift-set-24-unique-loose-leaf-teas-in-tin-caddies-premium-tea-gift-box-gluten-free-non-gmo-gifts-for-women-men-adults"
 "2026-12-01":
   type: "longtail"
   title: "Best Tea Gifts for Christmas"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-world-top-20-favourites-tea-sampler-set-loose-leaf-tea-100-cups-tea-variety-pack-with-green-herbal-black-chai-brew-vacuum-sealed-for-freshness-brew-hot-cold"
 "2026-12-02":
   type: "longtail"
   title: "Tea Gift Sets for Every Type of Tea Drinker"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "teabloom-worlds-finest-pyramid-tea-collection-24-varieties-of-usda-certified-organic-kosher-teas-black-tea-green-tea-white-tea-oolong-tea-and-herbal-fruit-tea-blends"
 "2026-12-03":
   type: "longtail"
   title: "Best Tea Samplers for Holiday Gifts"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-luxury-tea-gift-set-24-unique-loose-leaf-teas-in-tin-caddies-premium-tea-gift-box-gluten-free-non-gmo-gifts-for-women-men-adults"
 "2026-12-04":
   type: "hub"
   title: "Christmas Tea Gift Hub"
@@ -909,7 +1035,9 @@
 "2026-12-07":
   type: "longtail"
   title: "Chai Tea for Winter"
-  cta_collection: "chai"
+  funnel: "commercial"
+  cluster: "chai"
+  cta_product: "b00t3b323e"
 "2026-12-08":
   type: "hub"
   title: "Winter Tea Basics Hub"
@@ -917,15 +1045,21 @@
 "2026-12-09":
   type: "longtail"
   title: "Tea Pairings for Holiday Cookies"
-  cta_collection: "sweet_dessert"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "b08vd5nc7w"
 "2026-12-10":
   type: "longtail"
   title: "Tea Pairings for Chocolate"
-  cta_collection: "sweet_dessert"
+  funnel: "commercial"
+  cluster: "black-earlgrey"
+  cta_product: "dammann-freres-satchets-darjeeling-tea-bags-premium-french-gourmet-black-tea-individually-wrapped-24-count-single-pack"
 "2026-12-11":
   type: "longtail"
   title: "Tea Pairings for Holiday Desserts"
-  cta_collection: "sweet_dessert"
+  funnel: "commercial"
+  cluster: "teapot-kettle"
+  cta_product: "b09mz51lz2"
 "2026-12-12":
   type: "hub"
   title: "Holiday Dessert Tea Pairing Hub"
@@ -937,11 +1071,15 @@
 "2026-12-14":
   type: "longtail"
   title: "How to Serve Tea at a Holiday Table"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b0cm3znghm"
 "2026-12-15":
   type: "longtail"
   title: "Tea for Christmas Brunch"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "matcha-tools"
+  cta_product: "nippon-matcha-organic-premium-ceremonial-grade-japanese-matcha-green-tea-powder-first-harvest-from-uji-kyoto-usda-certified-stone-ground-smooth-vibrant-100g-3-53oz"
 "2026-12-16":
   type: "hub"
   title: "Holiday Hosting Tea Hub"
@@ -949,11 +1087,15 @@
 "2026-12-17":
   type: "longtail"
   title: "Last-Minute Tea Gifts"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "vahdam-world-top-20-favourites-tea-sampler-set-loose-leaf-tea-100-cups-tea-variety-pack-with-green-herbal-black-chai-brew-vacuum-sealed-for-freshness-brew-hot-cold"
 "2026-12-18":
   type: "longtail"
   title: "Stocking Stuffer Tea Ideas"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "gift-sampler"
+  cta_product: "teabloom-worlds-finest-pyramid-tea-collection-24-varieties-of-usda-certified-organic-kosher-teas-black-tea-green-tea-white-tea-oolong-tea-and-herbal-fruit-tea-blends"
 "2026-12-19":
   type: "longtail"
   title: "Tea Gifts Under Simple Budgets"
@@ -965,19 +1107,27 @@
 "2026-12-21":
   type: "longtail"
   title: "Winter Solstice Tea Routine"
-  cta_collection: "daily_comfort"
+  funnel: "commercial"
+  cluster: "black-earlgrey"
+  cta_product: "b00vfypg1s"
 "2026-12-22":
   type: "longtail"
   title: "Best Tea for Quiet Winter Nights"
-  cta_collection: "sleep_relaxation"
+  funnel: "commercial"
+  cluster: "herbal-caffeinefree"
+  cta_product: "b0b8jcjtlp"
 "2026-12-23":
   type: "longtail"
   title: "Caffeine-Free Tea for Holiday Evenings"
-  cta_collection: "organic_caffeine_free"
+  funnel: "commercial"
+  cluster: "wellness"
+  cta_product: "b084r71hrd"
 "2026-12-24":
   type: "longtail"
   title: "Christmas Eve Tea Ideas"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "teapot-kettle"
+  cta_product: "b0bf53dnfx"
 "2026-12-25":
   type: "longtail"
   title: "Christmas Day Tea Routine"
@@ -993,11 +1143,15 @@
 "2026-12-28":
   type: "longtail"
   title: "Gentle Tea Routine for the New Year"
-  cta_collection: "daily_comfort"
+  funnel: "commercial"
+  cluster: "chai"
+  cta_product: "b00m0yll6q"
 "2026-12-29":
   type: "longtail"
   title: "Tea Goals for the New Year"
-  cta_collection: "tea_gift_sets_samplers"
+  funnel: "commercial"
+  cluster: "green"
+  cta_product: "english-tea-shop-organic-sencha-green-tea-20-tea-bag-sachets-30g"
 "2026-12-30":
   type: "hub"
   title: "New Year Tea Routine Hub"
@@ -1005,4 +1159,6 @@
 "2026-12-31":
   type: "longtail"
   title: "Year-End Tea Shelf Refresh"
-  cta_collection: "tea_storage_canisters"
+  funnel: "commercial"
+  cluster: "fruit-iced"
+  cta_product: "dammann-freres-sachets-jardin-bleu-tea-bags-premium-gourmet-french-black-tea-blend-strawberry-rhubarb-flavors-25-count-single-pack"

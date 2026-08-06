@@ -14,7 +14,30 @@ from shopify_pub import (admin_url, create_article, find_article_by_publish_date
                           get_blog_id, insert_body_images, public_url, upload_image)
 
 
-def process_one_day(date, env, sched, cols):
+def _product_cta_and_notes(clusters, cluster_key, product_handle):
+    c = clusters.get(cluster_key or "", {})
+    heroes = c.get("hero", [])
+    hero = next((h for h in heroes if h.get("handle") == product_handle), heroes[0] if heroes else None)
+    url = "https://steep-society.com/products/" + product_handle
+    btn = (hero.get("button") if hero else None) or "Shop our pick"
+    cta = {"title": btn, "handle": product_handle, "url": url, "kind": "product"}
+    baits = c.get("bait", [])
+    bait_names = ", ".join(b.get("brand", "") for b in baits if b.get("brand"))
+    others = "; ".join(h["title"] for h in heroes if h.get("handle") != product_handle)
+    hero_title = hero.get("title") if hero else product_handle
+    notes = (
+        "MARGIN FUNNEL - this is a COMMERCIAL-INVESTIGATION post in the '" + (cluster_key or "") + "' cluster.\n"
+        "- Foreground a recognizable BRAND (bait anchor) in the title framing, the intro, and the #1 list slot to catch search demand: " + bait_names + ".\n"
+        "- Your 'Our Pick' / 'Best Value' MUST be this in-house margin hero, linked DIRECTLY to its product page at least TWICE in the body as a natural recommendation (NO price or discount numbers; use 'our pick' / 'great value'):\n"
+        "    OUR PICK: " + hero_title + " -> " + url + "\n"
+        + ("    (other in-house picks you may reference: " + others + ")\n" if others else "")
+        + "- The single CTA button after Quick Recap already links to this product page.\n"
+        "- Do NOT label any product outside this list as 'our pick' or 'best value'."
+    )
+    return cta, notes
+
+
+def process_one_day(date, env, sched, cols, targeting):
     log("=" * 60)
     log(f"=== Processing {date} ===")
     log("=" * 60)
@@ -41,7 +64,12 @@ def process_one_day(date, env, sched, cols):
         return summary
 
     entry = sched[date]
-    cta = cols[entry["cta_collection"]]
+    extra_notes = None
+    if entry.get("cta_product"):
+        _clusters = (targeting or {}).get("steep", {}).get("clusters", {})
+        cta, extra_notes = _product_cta_and_notes(_clusters, entry.get("cluster"), entry["cta_product"])
+    else:
+        cta = cols[entry["cta_collection"]]
     summary["title"] = entry["title"]
     summary["type"] = entry.get("type", "longtail")
 
@@ -55,6 +83,7 @@ def process_one_day(date, env, sched, cols):
                 topic=entry["title"], date=date,
                 post_type=entry.get("type", "longtail"),
                 subtype=entry.get("subtype"), cta=cta,
+                extra_notes=extra_notes,
             )
             article_path.write_text(json.dumps(article, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -137,6 +166,8 @@ def main():
     env = load_env()
     sched = load_yaml(CONFIG_DIR / "schedule.yaml")
     cols = load_yaml(CONFIG_DIR / "collections.yaml")
+    _tgt_path = CONFIG_DIR / "targeting.yaml"
+    targeting = load_yaml(_tgt_path) if _tgt_path.exists() else {}
 
     log("\n" + "#" * 64)
     log(f"# WEEKLY BATCH — {start} 부터 {args.days}일치")
@@ -145,7 +176,7 @@ def main():
     summaries = []
     for i in range(args.days):
         d = start + _dt.timedelta(days=i)
-        s = process_one_day(d.isoformat(), env, sched, cols)
+        s = process_one_day(d.isoformat(), env, sched, cols, targeting)
         summaries.append(s)
 
     log("\n" + "=" * 64)

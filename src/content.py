@@ -67,6 +67,15 @@ never repeat an anchor, never paste bare URLs.
 ## DO NOT
 - No keyword stuffing, no fabricated studies or testimonials, no competitor names,
 - no medical claims (see HEALTH CLAIM SAFETY), max 6 internal links per post.
+
+## MARGIN-TARGETED CONVERSION (commercial-investigation posts)
+Steep runs differential margins: recognizable BRAND products ("bait") are priced to win search/click demand; in-house "hero" products carry the margin. The blog's job is to move brand/bait searchers onto a hero product.
+- The weekly commercial-investigation share (~60%, usually 4 posts/week) is assigned to the targeting-cluster topics, and each such post's "Our Pick" and CTA is a HERO product direct link. The exact bait brands and hero product (with URL) are given in the user message (CTA block + Additional notes) - follow them exactly.
+- On comparison and "Best X" posts: put the recognizable BRAND (bait) in the search title, the intro, and the #1 list slot to capture demand; the "Our Pick / Best Value" slot MUST be a hero product with a direct product-page link.
+- Commercial posts: at least 2 of the (max 6) internal links are direct links to the hero product page. How-to / quick-fix (the 40%) stay exactly as before - a collection CTA, no forced product push.
+- CTA target: commercial posts link the CTA button to the hero PRODUCT page (button text = a natural product-name phrase, NOT a collection name). Hub / how-to / quick-fix keep the COLLECTION CTA.
+- Never print price or discount numbers (they change often). Use neutral value language: "our pick", "great value", "best all-rounder".
+- Only products named in the notes are heroes; never call any other product "our pick" / "best value". If a hero is unavailable, the notes name the substitute.
 """
 
 
@@ -200,12 +209,21 @@ HARD RULES (auto-fail if violated):
 
 def _build_user_prompt(*, date, topic, post_type, subtype, cta, hub_links, extra_notes):
     type_str = "Post type: " + post_type + (" / " + subtype if subtype else "")
-    cta_block = (
-        "CTA Collection (USE EXACTLY THIS):\n"
-        "  Display name (button text): " + cta["title"] + "\n"
-        "  Handle: " + cta["handle"] + "\n"
-        "  Full URL: " + cta["url"] + "\n"
-    )
+    if cta.get("kind") == "product":
+        cta_block = (
+            "CTA - MARGIN 'OUR PICK' PRODUCT (USE EXACTLY THIS):\n"
+            "  Button text (natural, product-name based - NOT a collection name): " + cta["title"] + "\n"
+            "  Product handle: " + cta["handle"] + "\n"
+            "  Full product URL: " + cta["url"] + "\n"
+            "  The single CTA after Quick Recap links to THIS product page. Also link this product inline in the body at least twice as the 'Our Pick' / 'Best Value'.\n"
+        )
+    else:
+        cta_block = (
+            "CTA Collection (USE EXACTLY THIS):\n"
+            "  Display name (button text): " + cta["title"] + "\n"
+            "  Handle: " + cta["handle"] + "\n"
+            "  Full URL: " + cta["url"] + "\n"
+        )
     image_count = ("1 featured + 3 body images (4 total)" if post_type == "hub"
                    else "1 featured + 2 body images (3 total)")
     hub_block = ""
@@ -223,23 +241,24 @@ def _build_user_prompt(*, date, topic, post_type, subtype, cta, hub_links, extra
         "CRITICAL FIRST-PASS 10/10 STANDARD:\n"
         "Your FIRST output MUST score 10/10/10. Before returning, verify ALL 17 pre-flight items in section 14c:\n"
         "  STRUCTURE (10): no h1, table <=5 rows, exactly 1 CTA after Quick Recap, no content below CTA, "
-        "CTA button text = collection name 1:1, all links https://steep-society.com/, F first/(C) parens, "
+        "CTA button text matches its target 1:1 (collection name for a collection CTA; the given product-name phrase for a product CTA), all links https://steep-society.com/, F first/(C) parens, "
         "correct image count, body image placeholders inserted, slug lowercase+hyphens.\n"
         "  SEO (5): title 50-70 chars, meta_title 50-60, meta_description 140-160, primary keyword in title/slug/meta/intro, "
         "FAQ section IMMEDIATELY followed by JSON-LD FAQPage <script> tag in body_html.\n"
         "  CONVERSION (2): every product category mentioned in body is CTA-matched or has inline link "
-        "(zero orphan purchase intent), Quick Answer in first 2-3 paragraphs.\n"
+        "(zero orphan purchase intent), Quick Answer in first 2-3 paragraphs. For a product CTA (margin 'Our Pick'), "
+        "link that product inline in the body at least twice and frame it as 'our pick'/'great value' with NO price numbers.\n"
         "If any item fails, FIX it before returning. Mark 10/10 only if every item passes."
     )
 
 
-def generate_draft(*, topic, date, post_type, subtype, cta, hub_links=None, env=None):
+def generate_draft(*, topic, date, post_type, subtype, cta, hub_links=None, extra_notes=None, env=None):
     env = env or load_env()
     sys_prompt = load_system_prompt()
     few_shot = _build_few_shot_block(load_few_shot_articles())
     full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + "\n\n" + BLOG_WRITING_RULES
     user_msg = _build_user_prompt(date=date, topic=topic, post_type=post_type,
-                                   subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=None)
+                                   subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=extra_notes)
     last_err = None
     for attempt in range(1, 4):
         log("[Pass 1] draft attempt " + str(attempt) + "/3 (model=" + env["ANTHROPIC_MODEL"] + ")")
@@ -347,7 +366,7 @@ GEMINI_REVIEW_SYSTEM = """You are an independent SEO + content reviewer for a Sh
 
 1. **content_quality** — Distinct angle, specific actionable info, no fluff, original insight.
 2. **onpage_seo** — Meta title 60 chars or fewer (short, punchy titles for how-to / quick-fix posts are GOOD — do NOT penalize a title for being under 50 chars). Meta description 150-160 ideal, 140-165 acceptable. Primary keyword in title/slug/meta/intro. Table max 5 data rows.
-3. **conversion_alignment** — Exactly ONE CTA block after Quick Recap whose button text matches its collection 1:1. NOTE: inline contextual collection/product links woven into body paragraphs are REQUIRED and GOOD — do NOT penalize them as "orphan mentions". An "orphan mention" is ONLY a product/collection named in text with NO link at all. TRUST the STRUCTURAL FACTS in the user message; never claim Quick Recap, the CTA, or JSON-LD is missing if the facts say it is present.
+3. **conversion_alignment** — Exactly ONE CTA block after Quick Recap whose button text matches its collection 1:1. NOTE: inline contextual collection/product links woven into body paragraphs are REQUIRED and GOOD — do NOT penalize them as "orphan mentions". An "orphan mention" is ONLY a product/collection named in text with NO link at all. TRUST the STRUCTURAL FACTS in the user message; never claim Quick Recap, the CTA, or JSON-LD is missing if the facts say it is present. For MARGIN posts whose CTA links to a /products/ page ("Our Pick"), the body MUST also link that same product inline at least once as a natural "our pick"/"best value" recommendation; a product CTA with no supporting inline product link, or a forced/unnatural recommendation, scores conversion_alignment 6 or lower. Collection CTAs (/collections/) on how-to/quick-fix/hub posts are correct - do not penalize them.
 4. **ai_search_optimization** — AI citation-friendly: Quick Answer in 1st-3rd paragraph, single-fact atomic sentences, numbers/measurements, FAQPage + Article JSON-LD inline in body. Optimized for ChatGPT/Perplexity/Google AI Overview citation.
 5. **eeat** — Google E-E-A-T quality signals: Experience (actual tested insights), Expertise (specific accurate data e.g. brewing temps), Authoritativeness (consistent brand voice), Trustworthiness (no factual errors, no contradictions).
 
@@ -546,12 +565,12 @@ def combined_min_score(article):
 
 
 def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=None,
-                          target_score=10, max_perfection_passes=2):
+                          extra_notes=None, target_score=10, max_perfection_passes=2):
     env = load_env()
     user_prompt = _build_user_prompt(date=date, topic=topic, post_type=post_type,
-                                      subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=None)
+                                      subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=extra_notes)
     draft = generate_draft(topic=topic, date=date, post_type=post_type,
-                            subtype=subtype, cta=cta, hub_links=hub_links, env=env)
+                            subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=extra_notes, env=env)
     critique = self_critique(draft, env)
     revised = revise(draft, critique, env, original_user_prompt=user_prompt)
     best = cross_review(revised, env)
