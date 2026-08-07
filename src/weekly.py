@@ -133,7 +133,8 @@ def process_one_day(date, env, sched, cols, targeting, force=False):
         body_with_imgs = insert_body_images(article["body_html"], body_uploaded)
         if entry.get("cta_product"):
             _plink = "/products/" + entry["cta_product"]
-            log(f"[cta-check] {date} product CTA link ({_plink}) present in body: {_plink in body_with_imgs}")
+            summary["cta_product_link_ok"] = _plink in body_with_imgs
+            log(f"[cta-check] {date} product CTA link ({_plink}) present in body: {summary['cta_product_link_ok']}")
         scheduled_utc = f"{date}T07:00:00Z"
         if force and existing:
             _aid = existing["id"].split("/")[-1] if isinstance(existing["id"], str) else existing["id"]

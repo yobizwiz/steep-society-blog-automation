@@ -155,12 +155,15 @@ def main():
     dates = [s.get("date","") for s in summaries if s.get("date")]
     range_str = f"{dates[0]} ~ {dates[-1]}" if dates else "(no dates)"
 
-    summary_emoji = "✅" if failed == 0 else "⚠️"
+    cta_missing = [s.get("date", "?") for s in summaries if s.get("cta_product_link_ok") is False]
+    summary_emoji = "✅" if (failed == 0 and not cta_missing) else "⚠️"
     header = (
         f"{summary_emoji} <b>Steep Society 자동 발행 결과</b>\n"
         f"<i>{esc(range_str)}</i>\n\n"
         f"성공 <b>{success}</b> / 실패 <b>{failed}</b> / 건너뜀 <b>{skipped}</b>\n"
     )
+    if cta_missing:
+        header += f"⚠️ <b>상품 CTA 누락(상업글):</b> {esc(', '.join(cta_missing))}\n"
 
     day_blocks = [render_day(s, articles_by_date.get(s.get("date"))) for s in summaries]
 
