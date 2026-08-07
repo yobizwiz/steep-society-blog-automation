@@ -14,6 +14,10 @@ on:
         description: '며칠치 (기본 7)'
         required: false
         default: '7'
+      force:
+        description: '기존 글 덮어쓰기(재생성) true/false'
+        required: false
+        default: 'false'
 
 jobs:
   generate:
@@ -56,7 +60,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.start_date }}" ]; then
             echo "[trigger] manual workflow_dispatch with start_date=${{ github.event.inputs.start_date }}"
-            python src/weekly.py --start "${{ github.event.inputs.start_date }}" --days "${{ github.event.inputs.days }}"
+            python src/weekly.py --start "${{ github.event.inputs.start_date }}" --days "${{ github.event.inputs.days }}" ${{ github.event.inputs.force == 'true' && '--force' || '' }}
           else
             # Friday cron — generate next week (Monday through Sunday, 7 days)
             NEXT_MON=$(date -u -d "next monday" +%Y-%m-%d)

@@ -11,7 +11,7 @@ from content import generate_full_article
 from validators import validate
 from images import generate_image_for_slot
 from shopify_pub import (admin_url, create_article, find_article_by_publish_date,
-                          get_blog_id, insert_body_images, public_url, upload_image)
+                          get_blog_id, insert_body_images, public_url, update_article_body, upload_image)
 
 
 def _product_cta_and_notes(clusters, cluster_key, product_handle):
@@ -37,7 +37,7 @@ def _product_cta_and_notes(clusters, cluster_key, product_handle):
     return cta, notes
 
 
-def process_one_day(date, env, sched, cols, targeting):
+def process_one_day(date, env, sched, cols, targeting, force=False):
     log("=" * 60)
     log(f"=== Processing {date} ===")
     log("=" * 60)
@@ -54,7 +54,7 @@ def process_one_day(date, env, sched, cols, targeting):
     except Exception as e:
         log(f"  Shopify 중복 체크 실패 (계속 진행): {e}", "WARN")
         existing = None
-    if existing:
+    if existing and not force:
         summary["status"] = "skipped"
         summary["error"] = f"이미 Shopify에 발행 예약된 글 있음: {existing['handle']}"
         summary["title"] = sched[date]["title"]
@@ -63,6 +63,8 @@ def process_one_day(date, env, sched, cols, targeting):
         log(f"⏭ {date}: SKIP (이미 존재) — {existing['handle']}", "WARN")
         return summary
 
+    if existing and force:
+        log(f"↻ {date}: FORCE 재생성 — 기존 글({existing['handle']}) 본문 제자리 업데이트", "WARN")
     entry = sched[date]
     extra_notes = None
     if entry.get("cta_product"):
@@ -75,7 +77,7 @@ def process_one_day(date, env, sched, cols, targeting):
 
     try:
         article_path = OUTPUT_DIR / f"{date}-article.json"
-        if article_path.exists():
+        if article_path.exists() and not force:
             log(f"Reusing existing {article_path.name}")
             article = json.loads(article_path.read_text(encoding="utf-8"))
         else:
@@ -129,13 +131,22 @@ def process_one_day(date, env, sched, cols, targeting):
             body_uploaded.append({"url": url, "alt": bi["alt"], "filename": bi["filename"]})
 
         body_with_imgs = insert_body_images(article["body_html"], body_uploaded)
+        if entry.get("cta_product"):
+            _plink = "/products/" + entry["cta_product"]
+            log(f"[cta-check] {date} product CTA link ({_plink}) present in body: {_plink in body_with_imgs}")
         scheduled_utc = f"{date}T07:00:00Z"
-        created = create_article(
-            env, blog_id=blog_id, article=article,
-            featured_image_url=feat_url, featured_image_alt=featured["alt"],
-            body_html=body_with_imgs, publish_mode="scheduled",
-            scheduled_at=scheduled_utc,
-        )
+        if force and existing:
+            _aid = existing["id"].split("/")[-1] if isinstance(existing["id"], str) else existing["id"]
+            update_article_body(env, _aid, body_with_imgs, image={"src": feat_url, "alt": featured["alt"]})
+            created = {"id": existing["id"], "handle": existing.get("handle")}
+            log(f"↻ {date}: 기존 글 본문 업데이트 완료 (발행 예약 보존)")
+        else:
+            created = create_article(
+                env, blog_id=blog_id, article=article,
+                featured_image_url=feat_url, featured_image_alt=featured["alt"],
+                body_html=body_with_imgs, publish_mode="scheduled",
+                scheduled_at=scheduled_utc,
+            )
         summary["article_id"] = created["id"]
         summary["handle"] = created.get("handle")
         summary["scheduled_at"] = scheduled_utc
@@ -155,6 +166,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--start", help="Start date YYYY-MM-DD (default: tomorrow)")
     ap.add_argument("--days", type=int, default=7)
+    ap.add_argument("--force", action="store_true", help="기존 예약글 덮어쓰기(재생성)")
     args = ap.parse_args()
 
     if args.start:
@@ -176,7 +188,7 @@ def main():
     summaries = []
     for i in range(args.days):
         d = start + _dt.timedelta(days=i)
-        s = process_one_day(d.isoformat(), env, sched, cols, targeting)
+        s = process_one_day(d.isoformat(), env, sched, cols, targeting, force=args.force)
         summaries.append(s)
 
     log("\n" + "=" * 64)
