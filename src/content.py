@@ -104,7 +104,10 @@ _NO_TEMP_MODELS = set()  # models that reject the deprecated `temperature` param
 def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=0.7):
     def _post(send_temp):
         payload = {"model": model, "max_tokens": max_tokens,
-                   "system": system, "messages": messages}
+                   "system": ([{"type": "text", "text": system,
+                                "cache_control": {"type": "ephemeral"}}]
+                              if isinstance(system, str) else system),
+                   "messages": messages}
         if send_temp and model not in _NO_TEMP_MODELS:
             payload["temperature"] = temperature
         data = json.dumps(payload).encode("utf-8")
