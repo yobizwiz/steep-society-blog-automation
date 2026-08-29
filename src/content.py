@@ -345,8 +345,11 @@ def revise(draft, critique, env, *, original_user_prompt):
     return out
 
 
-def cross_review(revised, env):
-    review_model = env.get("ANTHROPIC_REVIEW_MODEL", env["ANTHROPIC_MODEL"])
+def cross_review(revised, env, post_type=None):
+    if post_type == "hub":
+        review_model = env.get("ANTHROPIC_REVIEW_MODEL", env["ANTHROPIC_MODEL"])
+    else:
+        review_model = env["ANTHROPIC_MODEL"]
     log("[Pass 4] cross-review (model=" + review_model + ")")
     sys_prompt = load_system_prompt()
     few_shot = _build_few_shot_block(load_few_shot_articles())
@@ -573,7 +576,7 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
                             subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=extra_notes, env=env)
     critique = self_critique(draft, env)
     revised = revise(draft, critique, env, original_user_prompt=user_prompt)
-    best = cross_review(revised, env)
+    best = cross_review(revised, env, post_type=post_type)
 
     # Pass 4b: Gemini independent cross-validation (does not modify body)
     try:
@@ -591,7 +594,7 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
             break
         log("\n--- perfection iter " + str(i+1) + "/" + str(max_perfection_passes) + " ---")
         try:
-            cand = perfection_pass(best, env)
+            cand = perfection_pass(best, env, post_type=post_type)
             # Re-validate with Gemini after perfection
             try:
                 gem2 = gemini_review(cand, env)
