@@ -60,7 +60,7 @@ def _format_collections_context(env):
         return "(collections unavailable: " + str(e) + ")"
 
 
-def perfection_pass(article, env):
+def perfection_pass(article, env, post_type=None):
     from content import _build_few_shot_block, _claude_call, _extract_json, OUTPUT_SCHEMA_INSTRUCTION, _call_and_parse_with_retry
     log("[Pass 5] perfection (10/10 push)")
     sys_prompt = load_system_prompt()
