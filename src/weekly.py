@@ -131,10 +131,13 @@ def process_one_day(date, env, sched, cols, targeting, force=False):
             body_uploaded.append({"url": url, "alt": bi["alt"], "filename": bi["filename"]})
 
         body_with_imgs = insert_body_images(article["body_html"], body_uploaded)
-        if entry.get("cta_product"):
-            _plink = "/products/" + entry["cta_product"]
-            summary["cta_product_link_ok"] = _plink in body_with_imgs
-            log(f"[cta-check] {date} product CTA link ({_plink}) present in body: {summary['cta_product_link_ok']}")
+        from product_cta import ensure_product_cta
+        from shopify_pub import _gql as _gql_shop
+        body_with_imgs, _ph, _ok = ensure_product_cta(
+            (lambda q, v=None: _gql_shop(env, q, v)), entry, cols, body_with_imgs,
+            "https://steep-society.com", log)
+        summary["cta_product_link_ok"] = bool(_ok)
+        log(f"[cta-check] {date} product CTA ({_ph}) present/injected: {_ok}")
         scheduled_utc = f"{date}T07:00:00Z"
         if force and existing:
             _aid = existing["id"].split("/")[-1] if isinstance(existing["id"], str) else existing["id"]
