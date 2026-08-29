@@ -325,8 +325,10 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
     last_png = None
     pngs = []
 
-    # Force Nano Banana 2 (Gemini) for higher quality. Imagen kept as fallback.
-    effective_model = "gemini-3.1-flash-image-preview"
+    # Model routing: honor caller's Gemini model choice (featured=Pro, body=Flash).
+    # Unknown/legacy (Imagen) values fall back to Nano Banana 2.
+    effective_model = model if str(model or "").startswith("gemini") else "gemini-3.1-flash-image-preview"
+    fallback_model = "gemini-3.1-flash-image-preview"
 
     def _try_generate(p):
         nonlocal effective_model
