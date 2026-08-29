@@ -72,6 +72,15 @@ def process_one_day(date, env, sched, cols, targeting, force=False):
         cta, extra_notes = _product_cta_and_notes(_clusters, entry.get("cluster"), entry["cta_product"])
     else:
         cta = cols[entry["cta_collection"]]
+    hub_links = None
+    try:
+        from product_cta import build_store_context
+        _ctx, hub_links = build_store_context(
+            env, entry, cols, "https://steep-society.com", "steep-society-journal")
+        if _ctx:
+            extra_notes = (extra_notes + "\n\n" + _ctx) if extra_notes else _ctx
+    except Exception as _e:
+        log(f"[store-context] 생략: {_e}", "WARN")
     summary["title"] = entry["title"]
     summary["type"] = entry.get("type", "longtail")
 
@@ -85,6 +94,7 @@ def process_one_day(date, env, sched, cols, targeting, force=False):
                 topic=entry["title"], date=date,
                 post_type=entry.get("type", "longtail"),
                 subtype=entry.get("subtype"), cta=cta,
+                hub_links=hub_links,
                 extra_notes=extra_notes,
             )
             article_path.write_text(json.dumps(article, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -108,9 +118,11 @@ def process_one_day(date, env, sched, cols, targeting, force=False):
 
         generated = []
         for img in article.get("images", []):
+            _img_model = ("gemini-3-pro-image" if img.get("role") == "featured"
+                          else "gemini-3.1-flash-image")
             r = generate_image_for_slot(
                 prompt=img["prompt"], filename_base=img["filename"],
-                api_key=google_key, model=imagen_model,
+                api_key=google_key, model=_img_model,
                 variants=variants, aspect_ratio="16:9",
                 anthropic_key=env["ANTHROPIC_API_KEY"],
                 max_vision_retries=2,
