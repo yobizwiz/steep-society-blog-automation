@@ -137,6 +137,9 @@ def verify_image_matches_prompt(image_bytes, prompt, *, anthropic_key,
         "Question: Does the image visually MATCH the prompt's described subject? "
         "If the prompt describes food/tea/scones but the image shows something completely "
         "unrelated (vehicles, animals, people, abstract shapes), it does NOT match.\n\n"
+        "Also FAIL it if: garbled text or labels, physically impossible details "
+        "(floating, self-pouring, or melted objects), warped or fused shapes, "
+        "glossy CGI render look, or bad composition (cropped subject, clutter).\n\n"
         "Reply with ONLY this JSON (no other text):\n"
         "{\"match\": true_or_false, \"reason\": \"brief explanation under 100 chars\"}"
     )
@@ -216,7 +219,10 @@ def generate_gemini_image(prompt, *, api_key, model="gemini-3.1-flash-image-prev
     )
     body = json.dumps({
         "contents": [{"parts": [{"text": full_prompt}]}],
-        "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]},
+        "generationConfig": ({"responseModalities": ["IMAGE", "TEXT"],
+                              "imageConfig": {"aspectRatio": aspect_ratio, "imageSize": "2K"}}
+                             if model.startswith("gemini-3") and "flash" not in model
+                             else {"responseModalities": ["IMAGE", "TEXT"]}),
     }).encode("utf-8")
     backoff_429 = [30, 90, 180, 360, 600]
     last_err = None
@@ -323,11 +329,19 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
     effective_model = "gemini-3.1-flash-image-preview"
 
     def _try_generate(p):
-        if effective_model.startswith("gemini"):
+        nonlocal effective_model
+        try:
             return generate_gemini_image(p, api_key=api_key, model=effective_model,
                                           n=variants, aspect_ratio=aspect_ratio)
-        return generate_imagen(p, api_key=api_key, model=effective_model,
-                                n=variants, aspect_ratio=aspect_ratio)
+        except ImagenSafetyBlocked:
+            raise
+        except Exception as e:
+            if effective_model != fallback_model:
+                log(f"  {effective_model} 실패({str(e)[:80]}) — {fallback_model} 폴백", "WARN")
+                effective_model = fallback_model
+                return generate_gemini_image(p, api_key=api_key, model=effective_model,
+                                              n=variants, aspect_ratio=aspect_ratio)
+            raise
 
     for vision_try in range(max_vision_retries + 1):
         try:
@@ -363,6 +377,7 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
             log(f"  최적화: {len(best):,}B → {len(webp):,}B ({len(webp)/len(best)*100:.0f}%)")
             break
         log(f"  ❌ 비전 검증 실패: {reason} — 재생성", "WARN")
+        safe_prompt = safe_prompt + " Strictly avoid this reported flaw: " + reason[:120] + "."
         if vision_try == max_vision_retries:
             log(f"  비전 재시도 한도 도달 — 마지막 이미지 사용", "WARN")
 
