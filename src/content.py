@@ -60,7 +60,7 @@ never repeat an anchor, never paste bare URLs.
 - Open with a 2–3 sentence direct answer, then expand.
 - Concrete numbers in every post: steep temperatures (°F/°C), steep times, leaf-to-water
   ratios (g per 8oz), caffeine levels (mg ranges), resteep counts.
-- Write like a tea sommelier sharing tested brewing notes.
+- Write like a tea sommelier — specific and practical brewing guidance, but never claim personal testing, named staff, or experiments that cannot be verified. Author is always the brand (Organization), never a named person.
 - 1,200–1,800 words for guides; 600–900 for quick-fix posts. End with a 3–5 question FAQ.
 - Title under 60 characters; meta description 150–160 characters with the primary keyword.
 
