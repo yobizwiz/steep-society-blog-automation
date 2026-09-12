@@ -219,12 +219,94 @@ def _apply_paragraph_spacing(html):
     return html
 
 
+# ---------------------------------------------------------------------------
+# Pre-publish sanitizer (added 2026-09-12): links use the store's primary
+# domain, fabricated persona bylines / Person authors are removed, and
+# internal links that 404 are unwrapped (anchor text kept).
+# Called from create_article(); never raises.
+# ---------------------------------------------------------------------------
+_SHOP_INFO = {}
+_URL_OK = {}
+
+
+def _shop_info(env):
+    """{'name': 'MERA', 'domain': 'merascent.com'} via shop.json, cached per run."""
+    key = env.get("SHOPIFY_STORE_URL", "")
+    if key not in _SHOP_INFO:
+        try:
+            s = _api(env, "shop.json")["shop"]
+            _SHOP_INFO[key] = {"name": s.get("name") or "", "domain": s.get("domain") or key}
+        except Exception as e:  # never block publishing on this lookup
+            log(f"  shop.json lookup failed: {e}", "WARN")
+            _SHOP_INFO[key] = {"name": "", "domain": key}
+    return _SHOP_INFO[key]
+
+
+def _url_alive(url):
+    """False only for a hard 404; network errors count as alive (don't strip)."""
+    import urllib.error
+    import urllib.request
+    if url in _URL_OK:
+        return _URL_OK[url]
+    ok = True
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}, method="HEAD")
+        with urllib.request.urlopen(req, timeout=15) as r:
+            ok = r.status < 400
+    except urllib.error.HTTPError as e:
+        ok = e.code != 404
+    except Exception:
+        ok = True
+    _URL_OK[url] = ok
+    return ok
+
+
+def sanitize_body(env, body_html, brand=None):
+    """1) myshopify links -> primary domain  2) drop fabricated bylines / Person authors
+    3) unwrap internal links that 404 (anchor text kept)."""
+    import re
+    out = body_html or ""
+    try:
+        info = _shop_info(env)
+        store = env.get("SHOPIFY_STORE_URL", "")
+        domain = info["domain"]
+        brand = (brand or info["name"] or "Store").replace('"', "")
+        base = f"https://{domain}"
+        if store and domain and store != domain:
+            out = out.replace(f"https://{store}", base)
+        # fabricated persona bylines, e.g. <p><em>Tested by Jane Doe, curator at X</em></p>
+        out, n_byline = re.subn(
+            r'<p[^>]*>\s*<em>\s*(?:Tested|Written|Reviewed|Curated|Edited)\s+by\s+[A-Z][^<]{0,200}</em>\s*</p>\s*',
+            "", out, flags=re.I)
+        if n_byline:
+            log(f"  removed {n_byline} fabricated byline(s)", "WARN")
+        # JSON-LD author as Person -> Organization
+        out, n_person = re.subn(
+            r'"author"\s*:\s*\{\s*"@type"\s*:\s*"Person"[^{}]*(?:\{[^{}]*\}[^{}]*)*\}',
+            '"author": {"@type": "Organization", "name": "%s", "url": "%s"}' % (brand, base), out)
+        if n_person:
+            log(f"  replaced {n_person} Person author(s) with Organization", "WARN")
+
+        # internal links that 404 -> plain text
+        def _fix(m):
+            href = m.group(2)
+            if href.startswith(base + "/") and not _url_alive(href):
+                log(f"  removed broken link: {href}", "WARN")
+                return m.group(4)
+            return m.group(0)
+        out = re.sub(r'(<a\b[^>]*href=")([^"]+)("[^>]*>)(.*?)</a>', _fix, out, flags=re.S | re.I)
+    except Exception as e:
+        log(f"  sanitize_body skipped: {e}", "WARN")
+    return out
+
+
 def create_article(env, *, blog_id, article, featured_image_url, featured_image_alt,
                     body_html, publish_mode="draft", scheduled_at=None):
     """publish_mode: draft / publish / scheduled (with scheduled_at ISO 8601 UTC)"""
     log(f"  create article (mode={publish_mode}): {article['title'][:60]}")
     # Apply paragraph + heading spacing to ensure readable layout on any theme
     body_html = _apply_paragraph_spacing(body_html)
+    body_html = sanitize_body(env, body_html)
 
     pa = {
         "title": article["title"],
