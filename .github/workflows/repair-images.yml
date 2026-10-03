@@ -6,8 +6,6 @@ name: Repair Body Images
 # 복구 완료 후 schedule 블록은 제거 예정.
 
 on:
-  schedule:
-    - cron: '5,35 * * * 0-4,6'
   workflow_dispatch:
     inputs:
       limit:
@@ -20,7 +18,7 @@ on:
         default: 'false'
 
 concurrency:
-  group: repair-images-${{ github.repository }}
+  group: blog-publication-${{ github.repository }}
   cancel-in-progress: false
 
 jobs:

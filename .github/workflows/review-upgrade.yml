@@ -1,8 +1,6 @@
 name: Review & Upgrade Existing Articles
 
 on:
-  schedule:
-    - cron: '15 * * * *'
   workflow_dispatch:
     inputs:
       blog_handle:
@@ -17,7 +15,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: review-upgrade
+  group: blog-publication-${{ github.repository }}
   cancel-in-progress: false
 
 jobs:

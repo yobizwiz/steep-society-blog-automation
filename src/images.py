@@ -329,25 +329,15 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
     last_png = None
     pngs = []
 
-    # Model routing: honor caller's Gemini model choice (featured=Pro, body=Flash).
-    # Unknown/legacy (Imagen) values fall back to Nano Banana 2.
-    effective_model = model if str(model or "").startswith("gemini") else "gemini-3.1-flash-image-preview"
-    fallback_model = "gemini-3.1-flash-image-preview"
+    # Honor the explicitly configured model without silent fallback.
+    effective_model = model
 
     def _try_generate(p):
-        nonlocal effective_model
-        try:
+        if str(effective_model).startswith('gemini'):
             return generate_gemini_image(p, api_key=api_key, model=effective_model,
-                                          n=variants, aspect_ratio=aspect_ratio)
-        except ImagenSafetyBlocked:
-            raise
-        except Exception as e:
-            if effective_model != fallback_model:
-                log(f"  {effective_model} 실패({str(e)[:80]}) — {fallback_model} 폴백", "WARN")
-                effective_model = fallback_model
-                return generate_gemini_image(p, api_key=api_key, model=effective_model,
-                                              n=variants, aspect_ratio=aspect_ratio)
-            raise
+                                         n=variants, aspect_ratio=aspect_ratio)
+        return generate_imagen(p, api_key=api_key, model=effective_model,
+                               n=variants, aspect_ratio=aspect_ratio)
 
     for vision_try in range(max_vision_retries + 1):
         try:

@@ -355,7 +355,7 @@ class Regressions(unittest.TestCase):
             if 'query BlogArticles' in q: return {'blog':{'id':'gid://shopify/Blog/1','handle':safe.BLOG_HANDLE,'articles':{'nodes':[],'pageInfo':{'hasNextPage':False,'endCursor':None}}}}
             if 'mutation' in q: return {'articleUpdate':{'article':{'id':'gid://shopify/Article/55'},'userErrors':[]}}
             return {'article':{'id':'gid://shopify/Article/55','body':posted['body_html'],'publishedAt':'2099-10-05T07:00:00Z','isPublished':False}}
-        env={**self.env,'ANTHROPIC_API_KEY':'mock','ANTHROPIC_MODEL':'mock','GOOGLE_API_KEY':'mock'}
+        env={**self.env,'ANTHROPIC_API_KEY':'mock','ANTHROPIC_MODEL':'mock','GOOGLE_API_KEY':'mock','IMAGEN_MODEL':'gemini-test'}
         import content
         with patch.object(shop,'_url_alive',return_value=True,create=True), patch.object(weekly,'generate_full_article',return_value=a), patch.object(content,'_claude_call',return_value=json.dumps(clear_review(None))), patch.object(fact_review,'load_sources',return_value=[]), patch.object(weekly,'generate_image_for_slot',return_value={'webp_bytes':b'webp','filename':'photo.webp','vision_verified':True}), patch.object(weekly,'upload_image',side_effect=['https://cdn.example/hero.webp','https://cdn.example/1.webp','https://cdn.example/2.webp']), patch.object(shop,'_api',side_effect=api), patch.object(shop,'_gql',side_effect=gql), patch.object(shop,'_http',return_value=(200,b'')):
             result=weekly.process_one_day('2099-10-05',env,{'2099-10-05':self.entry},self.cols)

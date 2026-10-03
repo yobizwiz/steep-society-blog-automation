@@ -6,6 +6,7 @@ editorial advice automatically. Missing/invalid evidence means review_required.
 """
 import hashlib
 import json
+import re
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 from utils import CONFIG_DIR
@@ -54,6 +55,31 @@ Check that the CTA fits the topic and brand intent. Do not force a product into 
 Return JSON only: {"coverage_complete":true,"claims":[{"quote":"verbatim article text","category":"safety|specification|policy|experience|quantitative|ranking|availability|other","source_id":"id","source_excerpt":"verbatim source excerpt","support_explanation":"why full claim is supported"}],"issues":[{"quote":"...","reason":"...","correction":"..."}],"cta_relevant":true}. Empty sources cannot substantiate claims. Do not manufacture evidence to pass."""
 
 
+# Coverage tripwire, not a list of prohibited advice. Correct warnings and rejected
+# quotations can pass with contextual review and matching primary evidence.
+RISK_COVERAGE = re.compile(
+    r'\b(?:FDA|USDA|microwav(?:e|ing)|unattended|flash\s*point|dilut(?:e|ion|ing)|'
+    r'caffeine[ -]free|decaf(?:feinated)?|non[ -]?toxic|food[ -]safe|'
+    r'(?:oven|dishwasher)[ -]safe|toxic|burn(?:ing|s)?|fire|children|pets|pregnan\w*)\b|'
+    r'\b(?:safe|unsafe|never|burn|fire|heat|oil|candle|warmer|diffuser|toxic)\b'
+    r'[^.!?\n]{0,90}\b(?:children|pets|pregnan\w*)\b|'
+    r'\b(?:children|pets|pregnan\w*)\b[^.!?\n]{0,90}'
+    r'\b(?:safe|unsafe|never|burn|fire|heat|oil|candle|warmer|diffuser|toxic)\b|'
+    r'\b\d+(?:\.\d+)?\s*(?:°\s*[FC]\b|degrees?\s*[FC]\b)', re.I)
+
+
+def strict_review_json(text):
+    def unique_keys(pairs):
+        out = {}
+        for key, value in pairs:
+            if key in out: raise ValueError('Duplicate review key')
+            out[key] = value
+        return out
+    def invalid_constant(value):
+        raise ValueError('Non-JSON constant')
+    return json.loads(text, object_pairs_hook=unique_keys, parse_constant=invalid_constant)
+
+
 def review_facts(article, env, *, reviewer=None, sources=None):
     payload = factual_payload(article)
     try:
@@ -62,22 +88,28 @@ def review_facts(article, env, *, reviewer=None, sources=None):
         key = digest({'article': payload, 'sources': evidence_digest})
         # Only runtime-owned cache survives within a run; model-provided review fields are ignored.
         if reviewer is None:
-            from content import _claude_call, _extract_json
+            from content import _claude_call
             def reviewer(prompt):
-                return _extract_json(_claude_call(api_key=env['ANTHROPIC_API_KEY'],
+                return strict_review_json(_claude_call(api_key=env['ANTHROPIC_API_KEY'],
                     model=env.get('ANTHROPIC_REVIEW_MODEL') or env['ANTHROPIC_MODEL'],
                     system=REVIEW_SYSTEM, messages=[{'role': 'user', 'content': prompt}],
-                    max_tokens=6000, temperature=0))
+                    max_tokens=6000, temperature=0, require_complete=True))
         result = reviewer(json.dumps({'article': payload, 'primary_sources': sources}, ensure_ascii=False))
         if (not isinstance(result, dict) or result.get('coverage_complete') is not True
                 or result.get('cta_relevant') is not True or not isinstance(result.get('issues'), list)
                 or not isinstance(result.get('claims'), list)):
             raise ReviewRequired('Factual reviewer returned incomplete or malformed coverage')
+        searchable = [payload['text']] + [payload.get(k) or '' for k in ('title', 'summary', 'meta_title', 'meta_description')] + payload['schema']
+        if not result['claims'] and not result['issues'] and any(RISK_COVERAGE.search(text) for text in searchable):
+            result['issues'].append({'quote': '', 'reason': 'coverage_incomplete: safety/technical language received no contextual assessment'})
+        if any(not isinstance(issue, dict) or not isinstance(issue.get('reason'), str) or not issue['reason'].strip()
+               for issue in result['issues']):
+            raise ReviewRequired('Malformed factual review issues')
         index = {s['id']: s for s in sources}
         for claim in result['claims']:
+            if not isinstance(claim, dict): raise ReviewRequired('Malformed factual review claim')
             src = index.get(claim.get('source_id'))
             quote, excerpt = claim.get('quote', ''), claim.get('source_excerpt', '')
-            searchable = [payload['text']] + [payload.get(k) or '' for k in ('title', 'summary', 'meta_title', 'meta_description')] + payload['schema']
             if (not src or not quote or not any(quote in text for text in searchable)
                     or not excerpt or excerpt not in src['text'] or not claim.get('support_explanation')):
                 result['issues'].append({'quote': quote, 'reason': 'Missing or mismatched primary evidence'})

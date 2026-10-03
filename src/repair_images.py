@@ -140,6 +140,8 @@ Exactly {n} item(s) in "images"."""
 
 
 def make_specs(title, body_text, n, env):
+    from release_gate import block_legacy_write
+    block_legacy_write()
     sys_prompt = load_system_prompt()
     full_system = sys_prompt + "\n\n" + SPEC_INSTRUCTION.format(n=n)
     user = (
@@ -208,6 +210,8 @@ def fill_body_placeholders(env, body_html, title):
 
 
 def repair_one(env, art):
+    from release_gate import block_legacy_write
+    block_legacy_write()
     aid = art["id"]
     title = art.get("title", "")
     body = art.get("body_html", "")
@@ -224,6 +228,8 @@ def repair_one(env, art):
 
 
 def main():
+    from release_gate import block_legacy_write
+    block_legacy_write()
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=20, help="max articles to repair this run")
     ap.add_argument("--dry-run", action="store_true", help="only report broken articles")

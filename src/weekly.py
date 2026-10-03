@@ -9,7 +9,7 @@ from images import generate_image_for_slot
 from shopify_pub import (get_blog_id, find_article_by_publish_date, upload_image, insert_body_images,
                          create_article, update_article_body, admin_url, public_url)
 from safe_publish import DOMAIN
-from release_gate import ReviewRequired, require_valid, save_candidate, strict_min_score, write_json
+from release_gate import ReviewRequired, require_valid, save_candidate, strict_min_score, write_json, configured_image_model
 from fact_review import review_facts
 
 
@@ -48,10 +48,11 @@ def prepare_article(date, env, entry, cols, *, use_existing=True):
 
 def publish_prepared(date, env, entry, cols, article, *, existing=None,
                      publish_mode='scheduled', scheduled_at=None):
+    model = configured_image_model(env)
     generated = []
     for im in article['images']:
         result = generate_image_for_slot(prompt=im['prompt'], filename_base=im['filename'],
-            api_key=env['GOOGLE_API_KEY'], model=env.get('IMAGEN_MODEL') or 'gemini-2.5-flash-image',
+            api_key=env['GOOGLE_API_KEY'], model=model,
             variants=int(env.get('IMAGE_VARIANTS_PER_SLOT') or '1'), aspect_ratio='16:9',
             anthropic_key=env['ANTHROPIC_API_KEY'], max_vision_retries=2)
         if result.get('vision_verified') is not True: raise ReviewRequired('Image not verified')

@@ -58,8 +58,7 @@ never repeat an anchor, never paste bare URLs.
 
 ## CONTENT QUALITY (E-E-A-T)
 - Open with a 2–3 sentence direct answer, then expand.
-- Concrete numbers in every post: steep temperatures (°F/°C), steep times, leaf-to-water
-  ratios (g per 8oz), caffeine levels (mg ranges), resteep counts.
+- Include numeric brewing guidance only when the supplied primary source supports the specific tea, product and conditions. Omit unsupported precision.
 - Write like a tea sommelier — specific and practical brewing guidance, but never claim personal testing, named staff, or experiments that cannot be verified. Author is always the brand (Organization), never a named person.
 - 1,200–1,800 words for guides; 600–900 for quick-fix posts. End with a 3–5 question FAQ.
 - Title under 60 characters; meta description 150–160 characters with the primary keyword.
@@ -101,7 +100,7 @@ def _build_few_shot_block(few_shot, max_chars_per=3500):
 
 _NO_TEMP_MODELS = set()  # models that reject the deprecated `temperature` param (e.g. Opus 4.8+)
 
-def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=0.7):
+def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=0.7, *, require_complete=False):
     from utils import CONFIG_DIR
     if not system.startswith("You are an independent factual and safety editor"):
         system += "\n\n" + (CONFIG_DIR / "editorial_policy.md").read_text(encoding="utf-8")
@@ -132,6 +131,8 @@ def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=
                 raise RuntimeError("Claude API HTTP " + str(e2.code) + ": " + e2.read().decode("utf-8", errors="ignore")[:1000])
         else:
             raise RuntimeError("Claude API HTTP " + str(e.code) + ": " + body_text)
+    if require_complete and data.get("stop_reason") != "end_turn":
+        raise RuntimeError("Factual review did not complete normally")
     parts = data.get("content", [])
     text_parts = [p.get("text", "") for p in parts if p.get("type") == "text"]
     return "\n".join(text_parts).strip()
@@ -192,8 +193,8 @@ OUTPUT_SCHEMA_INSTRUCTION = """OUTPUT FORMAT - return ONE JSON object with EXACT
     "content_quality": {"score": 8, "reason": "evidence-based assessment; lower if warranted"},
     "onpage_seo": {"score": 8, "reason": "evidence-based assessment; lower if warranted"},
     "conversion_alignment": {"score": 8, "reason": "evidence-based assessment; lower if warranted"},
-    "ai_search_optimization": {"score": 10, "reason": "Quick Answer 2-3문단 내, 단일 사실 문장, 숫자/측정 풍부, FAQ+Article JSON-LD"},
-    "eeat": {"score": 10, "reason": "Experience+Expertise+Authoritativeness+Trustworthiness"},
+    "ai_search_optimization": {"score": 0, "reason": "Quick Answer 2-3문단 내, 단일 사실 문장, 숫자/측정 풍부, FAQ+Article JSON-LD"},
+    "eeat": {"score": 0, "reason": "Experience+Expertise+Authoritativeness+Trustworthiness"},
     "body_judgment": "...",
     "page_judgment": "page-level acknowledges template deductions are template issues, not body issues",
     "deductions": []
@@ -254,7 +255,7 @@ def _build_user_prompt(*, date, topic, post_type, subtype, cta, hub_links, extra
         "  CONVERSION (2): every product category mentioned in body is CTA-matched or has inline link "
         "(zero orphan purchase intent), Quick Answer in first 2-3 paragraphs. For a product CTA (margin 'Our Pick'), "
         "explain relevance honestly without unsupported best-value or comparative claims.\n"
-        "If any item fails, FIX it before returning. Mark 10/10 only if every item passes."
+        "If any item fails, FIX it before returning. Score each dimension honestly and state unresolved weaknesses; factual approval is separate."
     )
 
 
@@ -376,7 +377,7 @@ GEMINI_REVIEW_SYSTEM = """You are an independent SEO + content reviewer for a Sh
 1. **content_quality** — Distinct angle, specific actionable info, no fluff, original insight.
 2. **onpage_seo** — Meta title 60 chars or fewer (short, punchy titles for how-to / quick-fix posts are GOOD — do NOT penalize a title for being under 50 chars). Meta description 150-160 ideal, 140-165 acceptable. Primary keyword in title/slug/meta/intro. Table max 5 data rows.
 3. **conversion_alignment** — Exactly ONE CTA block after Quick Recap whose button text matches its collection 1:1. NOTE: inline contextual collection/product links woven into body paragraphs are REQUIRED and GOOD — do NOT penalize them as "orphan mentions". An "orphan mention" is ONLY a product/collection named in text with NO link at all. TRUST the STRUCTURAL FACTS in the user message; never claim Quick Recap, the CTA, or JSON-LD is missing if the facts say it is present. For MARGIN posts whose CTA links to a /products/ page ("Our Pick"), the body MUST also link that same product inline at least once as a natural "our pick"/"best value" recommendation; a product CTA with no supporting inline product link, or a forced/unnatural recommendation, scores conversion_alignment 6 or lower. Collection CTAs (/collections/) on how-to/quick-fix/hub posts are correct - do not penalize them.
-4. **ai_search_optimization** — AI citation-friendly: Quick Answer in 1st-3rd paragraph, single-fact atomic sentences, numbers/measurements, FAQPage + Article JSON-LD inline in body. Optimized for ChatGPT/Perplexity/Google AI Overview citation.
+4. **ai_search_optimization** — AI citation-friendly: Quick Answer in 1st-3rd paragraph, single-fact atomic sentences, source-supported facts where relevant, FAQPage + Article JSON-LD inline in body. Optimized for ChatGPT/Perplexity/Google AI Overview citation.
 5. **eeat** — Google E-E-A-T quality signals: Experience (actual tested insights), Expertise (specific accurate data e.g. brewing temps), Authoritativeness (consistent brand voice), Trustworthiness (no factual errors, no contradictions).
 
 Be brutally honest. Most articles deserve 7-9, not 10. Cite specific weaknesses.
@@ -576,7 +577,7 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
             break
         log("\n--- perfection iter " + str(i+1) + "/" + str(max_perfection_passes) + " ---")
         try:
-            cand = perfection_pass(best, env, post_type=post_type)
+            cand = perfection_pass(best, env, post_type=post_type, cta=cta)
             # Re-validate with Gemini after perfection
             try:
                 gem2 = gemini_review(cand, env)

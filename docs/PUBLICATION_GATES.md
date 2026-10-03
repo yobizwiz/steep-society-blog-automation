@@ -19,7 +19,7 @@ Blog lookup and article lookup are scoped and paginated. Dates are compared in U
 From the repository root, with Python 3.11 or newer:
 
 ```text
-python -m unittest discover -s tests -v
+python -X utf8 -m unittest discover -s tests -v
 git diff --check
 ```
 
@@ -35,5 +35,15 @@ On a receipt marked `creating`, `created_draft`, or `reconciliation_required`, i
 
 - No live API or paid model run validated this branch. Latest Shopify GraphQL schema validation is separate from end-to-end integration testing. Default API version is 2026-10 and can be set with `SHOPIFY_API_VERSION`.
 - Source libraries are intentionally small; ordinary advice can pass, but unsupported factual topics will hold until applicable evidence is supplied or claims are rewritten. No blanket keyword ban is used.
-- Legacy bulk maintenance tools (`repair_images`, `refine_images`, `review_and_upgrade`, and STEEP `gsc_refresh`/`revary_images` where present) still call body updates without full article metadata. The shared updater rejects these writes. They are not migrated release paths and may incur generation/upload work before reaching that rejection. Do not run their write modes before migrating them to the complete final-review contract. Historical date-repair helpers are outside the supported publication protocol.
+- Legacy repair/refine/revary/review-upgrade entry points and workers fail before API calls, including paid generation and uploads. STEEP/SERA schedule triggers are removed locally; dispatch definitions remain, but these tools need migration before they can run. Image SEO patching is report-only. Historical date-repair and GSC helpers remain outside the supported publication protocol.
 - Existing Shopify articles are not repaired by deploying this code. The Oct 5–11 candidates require separate review and separately authorized live changes.
+
+## Follow-up review fixes (2026-10-03)
+
+Final release requires trusted ISO date and HTTPS scheduled CTA context before transformation or network checks. The CTA must contain exactly one anchor equal to that destination. Editorial improvement receives the CTA explicitly and cannot choose another collection.
+
+Factual review requires a complete end_turn response and strict JSON; no repaired, fenced, duplicate-key or non-finite JSON is accepted. Empty claims/issues alongside salient safety or technical language is incomplete coverage. This is not a content ban: supported warnings and rejected unsafe quotations can pass. Ordinary advice can pass an empty review. The backstop does not prove exhaustive coverage, especially when another claim was reviewed; no measured model accuracy or pass rate is claimed.
+
+Supported image callers require explicit IMAGEN_MODEL, with no inconsistent default or silent preview-model substitution. Model availability and account entitlement require a separately scoped live check. 403/429 link results fail verification without being treated as confirmed 404 removals. Known final-stage duplicate HEAD requests are retained rather than weakening verification.
+
+Source snapshots prove only their exact cited facts and conditions. Never use a store policy or catalog as independent safety evidence. Read-only snapshot curation may be blocked by storefront throttling; missing evidence is not replaced with guessed text.

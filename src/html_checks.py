@@ -87,8 +87,8 @@ def cta_issues(html, expected_url=None):
         return [{'rule': 'cta_count', 'detail': f'Expected one semantic CTA; found {len(boxes)}'}]
     box = boxes[0]
     links = [n.attrs.get('href') for n in box.walk() if n.tag == 'a']
-    if not links or (expected_url and expected_url not in links):
-        issues.append({'rule': 'cta_destination', 'detail': 'Closing CTA lacks exact scheduled destination'})
+    if len(links) != 1 or not links[0] or (expected_url and links[0] != expected_url):
+        issues.append({'rule': 'cta_destination', 'detail': 'Closing CTA must contain exactly one link to the scheduled destination'})
     headings = [n for n in doc.nodes() if n.tag in ('h2', 'h3', 'h4') and n.start < box.start]
     if not headings or ' '.join(headings[-1].visible_text().split()).casefold() != 'quick recap':
         issues.append({'rule': 'quick_recap', 'detail': 'Last heading before CTA must be Quick Recap'})

@@ -3,8 +3,9 @@ import hashlib
 import json
 import re
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 from utils import OUTPUT_DIR
 
 
@@ -45,6 +46,8 @@ def strict_min_score(article):
 
 
 def require_valid(article, *, post_type='longtail', final=False):
+    if final:
+        require_release_context(article)
     from validators import validate
     result = validate(article, post_type=post_type, final=final)
     if strict_min_score(article) < MIN_SCORE:
@@ -54,6 +57,36 @@ def require_valid(article, *, post_type='longtail', final=False):
     result['ok'] = not result['violations']
     if not result['ok']: raise ReviewRequired(json.dumps(result, ensure_ascii=False))
     return result
+
+
+def require_release_context(article):
+    context = article.get('_release_context')
+    if not isinstance(context, dict):
+        raise ReviewRequired('release_context: trusted schedule context is required')
+    try:
+        day = context['date']
+        if not isinstance(day, str) or date.fromisoformat(day).isoformat() != day:
+            raise ValueError('Invalid date')
+        destination = context['cta_url']
+        if not isinstance(destination, str): raise ValueError('Invalid CTA URL')
+        url = urlsplit(destination)
+        if (url.scheme != 'https' or not url.hostname
+                or url.username or url.password or any(c.isspace() for c in destination)):
+            raise ValueError('Invalid CTA URL')
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ReviewRequired('release_context: ISO date and absolute HTTPS CTA URL are required') from exc
+    return context
+
+
+def block_legacy_write():
+    raise ReviewRequired('Legacy maintenance is disabled before API calls; migrate through the complete scheduled-article review pipeline first')
+
+
+def configured_image_model(env):
+    model = env.get('IMAGEN_MODEL')
+    if not isinstance(model, str) or not model.strip():
+        raise ReviewRequired('Configure IMAGEN_MODEL explicitly before generating images')
+    return model.strip()
 
 
 def save_candidate(article, stage, report):

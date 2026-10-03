@@ -1,0 +1,2 @@
+# Snapshot hashes must be identical on Windows and Linux.
+config/evidence/*.txt text eol=lf

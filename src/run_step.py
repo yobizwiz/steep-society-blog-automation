@@ -91,7 +91,7 @@ def main():
         if cur_score >= 8:
             log("editorial threshold met; factual gate still required")
             return
-        cand = perfection_pass(current, env)
+        cand = perfection_pass(current, env, post_type=entry.get("type", "longtail"), cta=cta)
         cand_score = min_score(cand)
         if cand_score >= cur_score:
             save_state(date, "perfection", cand)

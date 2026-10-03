@@ -6,7 +6,7 @@ import re
 from html import escape
 from urllib.parse import urlsplit
 from utils import OUTPUT_DIR
-from release_gate import ReviewRequired, digest, publication_lock, require_valid, save_candidate, write_json
+from release_gate import ReviewRequired, digest, publication_lock, require_valid, require_release_context, save_candidate, write_json
 from fact_review import review_facts
 from html_checks import Document
 
@@ -114,6 +114,7 @@ def prepare_final(env, article, body, featured_url):
     final = deepcopy(article)
     report = {'status': 'review_required'}
     try:
+        require_release_context(final)
         if hasattr(_shop(), '_apply_paragraph_spacing'): body = _shop()._apply_paragraph_spacing(body)
         if hasattr(_shop(), 'sanitize_body'): body = _shop().sanitize_body(env, body)
         body = sync_schema_images(body, featured_url)

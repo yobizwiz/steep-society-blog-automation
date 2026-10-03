@@ -14,7 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from utils import OUTPUT_DIR, CONFIG_DIR, load_env, load_yaml, log
-from release_gate import require_valid, digest
+from release_gate import require_valid, digest, configured_image_model
 from fact_review import review_facts
 from weekly import choose_cta
 from images import generate_image_for_slot
@@ -60,7 +60,7 @@ def main():
             prompt=im["prompt"],
             filename_base=im["filename"],
             api_key=env["GOOGLE_API_KEY"],
-            model=env.get("IMAGEN_MODEL", "imagen-3.0-generate-002"),
+            model=configured_image_model(env),
             variants=args.variants,
             aspect_ratio="16:9",
             anthropic_key=env["ANTHROPIC_API_KEY"],

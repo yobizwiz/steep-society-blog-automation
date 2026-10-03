@@ -196,7 +196,7 @@ def _shop_info(env):
 
 
 def _url_alive(url):
-    """False only for a hard 404; network errors count as alive (don't strip)."""
+    """False only for a hard 404; transport and non-404 HTTP errors fail closed."""
     import urllib.error
     import urllib.request
     if url in _URL_OK:
