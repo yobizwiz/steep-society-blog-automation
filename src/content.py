@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json, re, urllib.error, urllib.request
 from utils import load_env, load_few_shot_articles, load_system_prompt, log
+from writer_evidence import ground_writer_prompt
 
 
 BLOG_WRITING_RULES = """## ⚠️ AUTHORITATIVE BLOG WRITING RULES — HIGHEST PRIORITY
@@ -266,6 +267,7 @@ def generate_draft(*, topic, date, post_type, subtype, cta, hub_links=None, extr
     full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + "\n\n" + BLOG_WRITING_RULES
     user_msg = _build_user_prompt(date=date, topic=topic, post_type=post_type,
                                    subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=extra_notes)
+    full_system, user_msg = ground_writer_prompt(full_system, user_msg)
     last_err = None
     for attempt in range(1, 4):
         log("[Pass 1] draft attempt " + str(attempt) + "/3 (model=" + env["ANTHROPIC_MODEL"] + ")")
@@ -322,9 +324,10 @@ def _call_and_parse_with_retry(*, label, max_attempts, call_fn):
 def self_critique(draft, env):
     log("[Pass 2] self-critique")
     user_msg = "Review this draft article JSON:\n\n```json\n" + json.dumps(draft, ensure_ascii=False, indent=2) + "\n```"
+    system, user_msg = ground_writer_prompt(CRITIQUE_SYSTEM, user_msg)
     def _call():
         return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
-                          system=CRITIQUE_SYSTEM, messages=[{"role": "user", "content": user_msg}],
+                          system=system, messages=[{"role": "user", "content": user_msg}],
                           max_tokens=8000, temperature=0.3)
     crit = _call_and_parse_with_retry(label="[Pass 2]", max_attempts=3, call_fn=_call)
     n = sum(len(crit.get(k, [])) for k in ("content_weaknesses", "seo_weaknesses", "conversion_weaknesses", "structure_violations"))
@@ -343,6 +346,7 @@ def revise(draft, critique, env, *, original_user_prompt):
         "## EDITOR CRITIQUE\n\n```json\n" + json.dumps(critique, ensure_ascii=False, indent=2) + "\n```\n\n"
         "Now produce REVISED article JSON. Address every weakness."
     )
+    full_system, user_msg = ground_writer_prompt(full_system, user_msg)
     def _call():
         return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
                           system=full_system, messages=[{"role": "user", "content": user_msg}],
@@ -363,6 +367,7 @@ def cross_review(revised, env, post_type=None):
     suffix = "\n\n## CROSS-MODEL FINAL POLISH\nFinal polish. Tighten weak sentences, fix subtle SEO, verify all hard rules. Return SAME JSON schema. ALWAYS include internal_judgment with ALL FIVE dimensions (content_quality, onpage_seo, conversion_alignment, ai_search_optimization, eeat) - never omit a dimension."
     full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + "\n\n" + BLOG_WRITING_RULES + suffix
     user_msg = "Polish this revised draft:\n\n```json\n" + json.dumps(revised, ensure_ascii=False, indent=2) + "\n```"
+    full_system, user_msg = ground_writer_prompt(full_system, user_msg)
     def _call():
         return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=review_model,
                           system=full_system, messages=[{"role": "user", "content": user_msg}],

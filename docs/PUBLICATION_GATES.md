@@ -55,3 +55,9 @@ Risk-bearing body sentences now require complete quoted coverage in claims/issue
 Semantic CTA checks recognize conventional separated class names such as cta-button, btn-primary and button--primary, but not incidental substrings such as buttonless-reference. Unknown theme-specific styling can still require review.
 
 STEEP fix_publish_dates and collection_fix now stop before credential loading or transport. Their remote/manual workflow definitions are unchanged; this local guard takes effect only after an authorized deployment.
+
+## Evidence before generation (2026-10-03)
+
+Draft, critique, revision, cross-review and perfection prompts now receive the same locally validated primary-source snapshots used by factual review. Source data is supplied as reference JSON, not trusted instructions. Hash, expiry or read failures stop the pass before paid transport. Empty libraries permit ordinary editorial advice but cannot substantiate safety, quantitative, policy or product claims; an unanswerable factual topic must remain unresolved. Sources and prior drafts do not authorize changing the scheduled CTA.
+
+No live pass-rate or cost reduction has been measured. Adding source text increases input tokens; it does not guarantee approval or zero regeneration. Factual review remains independent. Model selection, call counts and final publication gates are unchanged. The existing perfection loop already skips improvement when the target score is met.

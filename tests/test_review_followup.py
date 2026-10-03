@@ -104,9 +104,9 @@ class ReviewFollowup(unittest.TestCase):
         import content, perfection
         cta = {'url':safe.DOMAIN+'/products/scheduled', 'title':'Scheduled product'}
         env = {'ANTHROPIC_API_KEY':'mock', 'ANTHROPIC_MODEL':'mock'}
-        with patch.object(perfection, 'load_system_prompt', return_value='Brand rules'), patch.object(perfection, 'load_few_shot_articles', return_value=[]), patch.object(content, '_claude_call', return_value=json.dumps(base.fixture())) as call:
+        with patch.object(facts, 'load_sources', return_value=[]), patch.object(perfection, 'load_system_prompt', return_value='Brand rules'), patch.object(perfection, 'load_few_shot_articles', return_value=[]), patch.object(content, '_claude_call', return_value=json.dumps(base.fixture())) as call:
             perfection.perfection_pass(base.fixture(), env, cta=cta)
-            sent = json.loads(call.call_args.kwargs['messages'][0]['content'])
+            sent = json.loads(call.call_args.kwargs['messages'][0]['content'].split('\n\n', 1)[1])
             self.assertEqual(sent['scheduled_cta'], cta)
             self.assertNotIn('BEST-matching collection', call.call_args.kwargs['system'])
             self.assertIn('exactly one link', call.call_args.kwargs['system'])
