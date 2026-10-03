@@ -52,6 +52,7 @@ Read EVERY assertion in title, metadata, body, links, and schema. Classify claim
 Ordinary subjective style advice needs no citation. Exact measurements presented as facts, medical/food/fire/electrical safety, dilution limits, material load/heat ratings, caffeine/chemistry, comparative rankings, product specifications/availability, shipping/returns, certification/FDA/USDA assertions, and purported firsthand testing require matching PRIMARY evidence provided below. Never invent facts, evidence, URLs, experience or reviewer scores.
 Manufacturer instructions for the specific product override generic advice. Reject unsupported precise recommendations. Evidence must support the complete claim, product, conditions, population and date, not merely mention the topic. Check recipe durations and physical calculations for completeness and consistency. A store catalog is not evidence for an independent safety claim. For alleged firsthand testing require documented method/results; absent evidence, flag it.
 Check that the CTA fits the topic and brand intent. Do not force a product into a care/information article. Each consequential claim must appear in claims with verbatim quote, category, source_id, exact source_excerpt, and a support_explanation. Unsupported claims must appear in issues with a concrete reason and suggested correction. For a claim needing no external evidence, omit it from claims.
+The input includes risk_sentences_requiring_assessment. Account for EVERY listed sentence with its COMPLETE verbatim sentence in claims or issues; a word or partial clause is not complete coverage. Preserve negation, qualifications and conditions. A listed sentence is a coverage checkpoint, not a determination that its advice is false. Do not add an unrelated supported claim to clear unreviewed safety language.
 Return JSON only: {"coverage_complete":true,"claims":[{"quote":"verbatim article text","category":"safety|specification|policy|experience|quantitative|ranking|availability|other","source_id":"id","source_excerpt":"verbatim source excerpt","support_explanation":"why full claim is supported"}],"issues":[{"quote":"...","reason":"...","correction":"..."}],"cta_relevant":true}. Empty sources cannot substantiate claims. Do not manufacture evidence to pass."""
 
 
@@ -80,8 +81,26 @@ def strict_review_json(text):
     return json.loads(text, object_pairs_hook=unique_keys, parse_constant=invalid_constant)
 
 
+def risk_sentences(payload):
+    """Deterministic coverage checkpoints, not a factual or safety verdict."""
+    sentences = re.split(r'(?<=[.!?])\s+', payload['text'])
+    return list(dict.fromkeys(s.strip() for s in sentences if RISK_COVERAGE.search(s)))
+
+
+def missing_risk_sentences(sentences, review):
+    # Partial overlap is insufficient: a quote such as "children" must not
+    # discharge a complete warning and its conditions. Trailing punctuation
+    # and whitespace formatting do not affect sentence coverage.
+    normalize = lambda text: ' '.join(text.split()).rstrip('.!?')
+    quotes = [normalize(item['quote']) for item in review['claims'] + review['issues']
+              if isinstance(item, dict) and isinstance(item.get('quote'), str) and item['quote'].strip()]
+    return [sentence for sentence in sentences
+            if not any(normalize(sentence) in quote for quote in quotes)]
+
+
 def review_facts(article, env, *, reviewer=None, sources=None):
     payload = factual_payload(article)
+    checkpoints = risk_sentences(payload)
     try:
         sources = load_sources() if sources is None else sources
         evidence_digest = digest(sources)
@@ -94,7 +113,8 @@ def review_facts(article, env, *, reviewer=None, sources=None):
                     model=env.get('ANTHROPIC_REVIEW_MODEL') or env['ANTHROPIC_MODEL'],
                     system=REVIEW_SYSTEM, messages=[{'role': 'user', 'content': prompt}],
                     max_tokens=6000, temperature=0, require_complete=True))
-        result = reviewer(json.dumps({'article': payload, 'primary_sources': sources}, ensure_ascii=False))
+        result = reviewer(json.dumps({'article': payload, 'primary_sources': sources,
+                                     'risk_sentences_requiring_assessment': checkpoints}, ensure_ascii=False))
         if (not isinstance(result, dict) or result.get('coverage_complete') is not True
                 or result.get('cta_relevant') is not True or not isinstance(result.get('issues'), list)
                 or not isinstance(result.get('claims'), list)):
@@ -115,6 +135,12 @@ def review_facts(article, env, *, reviewer=None, sources=None):
                 result['issues'].append({'quote': quote, 'reason': 'Missing or mismatched primary evidence'})
             elif claim.get('category') == 'safety' and src.get('kind') not in ('manufacturer', 'primary_authority'):
                 result['issues'].append({'quote': quote, 'reason': 'Safety claim requires authority or manufacturer evidence'})
+        missing = missing_risk_sentences(checkpoints, result)
+        for sentence in missing:
+            result['issues'].append({'quote': sentence,
+                'reason': 'coverage_incomplete: risk sentence lacks complete contextual assessment'})
+        result['risk_sentence_coverage'] = {'total': len(checkpoints),
+            'covered': len(checkpoints) - len(missing), 'missing': missing}
         result.update({'input_sha256': key, 'evidence_sha256': evidence_digest,
                        'status': 'review_required' if result['issues'] else 'passed'})
         article['fact_review'] = result

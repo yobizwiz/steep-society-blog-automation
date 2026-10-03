@@ -68,7 +68,9 @@ class Document(HTMLParser):
             path = urlsplit(a.attrs.get('href', '')).path
             style = re.sub(r'\s+', '', a.attrs.get('style', '').lower())
             if not re.match(r'^/(products|collections)/[^/]+/?$', path): continue
-            if not (a.attrs.get('role') == 'button' or set(a.attrs.get('class', '').split()) & {'button', 'btn'}
+            button_class = any(re.search(r'(?:^|[-_])(?:btn|button)(?:$|[-_])', token, re.I)
+                               for token in a.attrs.get('class', '').split())
+            if not (a.attrs.get('role') == 'button' or button_class
                     or ('display:inline-block' in style and 'background' in style)): continue
             parents, node = [], a
             while node.parent:
