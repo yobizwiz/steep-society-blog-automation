@@ -6,6 +6,10 @@ name: Patch Body Image SEO Tags (One-shot)
 on:
   workflow_dispatch:
 
+concurrency:
+  group: blog-publication-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   patch:
     runs-on: ubuntu-latest

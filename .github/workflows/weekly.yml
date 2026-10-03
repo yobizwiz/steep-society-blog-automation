@@ -19,6 +19,10 @@ on:
         required: false
         default: 'false'
 
+concurrency:
+  group: blog-publication-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -57,16 +61,15 @@ jobs:
         run: python src/verify_keys.py
 
       - name: Run weekly batch
+        env:
+          START_DATE: ${{ github.event.inputs.start_date }}
+          DAYS: ${{ github.event.inputs.days || '7' }}
+          FORCE: ${{ github.event.inputs.force || 'false' }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.start_date }}" ]; then
-            echo "[trigger] manual workflow_dispatch with start_date=${{ github.event.inputs.start_date }}"
-            python src/weekly.py --start "${{ github.event.inputs.start_date }}" --days "${{ github.event.inputs.days }}" ${{ github.event.inputs.force == 'true' && '--force' || '' }}
-          else
-            # Friday cron — generate next week (Monday through Sunday, 7 days)
-            NEXT_MON=$(date -u -d "next monday" +%Y-%m-%d)
-            echo "[trigger] Friday cron — next Monday = $NEXT_MON, generating 7 days (Mon-Sun)"
-            python src/weekly.py --start "$NEXT_MON" --days 7
-          fi
+          args=(--days "$DAYS")
+          if [ -n "$START_DATE" ]; then args+=(--start "$START_DATE"); fi
+          if [ "$FORCE" = "true" ]; then args+=(--force); fi
+          python src/weekly.py "${args[@]}"
 
       - name: Upload weekly report
         if: always()
@@ -76,6 +79,9 @@ jobs:
           path: |
             output/weekly-batch-*.json
             output/*-article.json
+            output/*-generated.*
+            output/*-final.*
+            output/receipts/*.json
           retention-days: 30
 
       - name: Send result Telegram
@@ -97,7 +103,7 @@ jobs:
               sys.exit(1)
           report = json.loads(open(files[-1], encoding="utf-8").read())
           summaries = report.get("summaries", [])
-          failed = [s for s in summaries if s.get("status") == "failed"]
+          failed = [s for s in summaries if s.get("status") not in ("success", "already_exists")]
           skipped = [s for s in summaries if s.get("status") == "skipped"]
           success = [s for s in summaries if s.get("status") == "success"]
           print(f"Days: {len(summaries)} | success={len(success)} failed={len(failed)} skipped={len(skipped)}")
@@ -105,7 +111,7 @@ jobs:
               print(f"::error::{s.get('date')} FAILED — {s.get('error','')[:200]}")
           for s in skipped:
               print(f"::warning::{s.get('date')} SKIPPED — {s.get('error','')}")
-          if failed:
+          if failed or len(summaries) != report.get("days") or not summaries:
               print("::error::One or more days failed — workflow marked as failure")
               sys.exit(1)
           print("All days succeeded.")

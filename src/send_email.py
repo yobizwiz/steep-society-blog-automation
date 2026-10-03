@@ -45,8 +45,8 @@ def render_html(report, articles_by_date):
     """Build the HTML body."""
     summaries = report.get("summaries", [])
     success = [s for s in summaries if s.get("status") == "success"]
-    failed = [s for s in summaries if s.get("status") == "failed"]
-    skipped = [s for s in summaries if s.get("status") == "skipped"]
+    failed = [s for s in summaries if s.get("status") not in ("success", "already_exists", "skipped")]
+    skipped = [s for s in summaries if s.get("status") in ("already_exists", "skipped")]
 
     css = """
     <style>
@@ -81,16 +81,16 @@ def render_html(report, articles_by_date):
     blocks = []
     for s in summaries:
         date = s.get("date", "?")
-        if s.get("status") == "failed":
+        if s.get("status") not in ("success", "already_exists", "skipped"):
             blocks.append(
                 f"<div class='day fail'>"
                 f"<div class='date'>{date}</div>"
-                f"<h2>❌ FAILED — {html.escape(s.get('title') or '(no title)')}</h2>"
+                f"<h2>❌ {html.escape(s.get('status', 'failed').upper())} — {html.escape(s.get('title') or '(no title)')}</h2>"
                 f"<div class='err'>{html.escape(s.get('error','') or '')[:600]}</div>"
                 f"</div>"
             )
             continue
-        if s.get("status") == "skipped":
+        if s.get("status") in ("already_exists", "skipped"):
             blocks.append(
                 f"<div class='day'>"
                 f"<div class='date'>{date}</div>"
@@ -151,8 +151,8 @@ def render_html(report, articles_by_date):
 def render_text(report, articles_by_date):
     summaries = report.get("summaries", [])
     success = [s for s in summaries if s.get("status") == "success"]
-    failed = [s for s in summaries if s.get("status") == "failed"]
-    skipped = [s for s in summaries if s.get("status") == "skipped"]
+    failed = [s for s in summaries if s.get("status") not in ("success", "already_exists", "skipped")]
+    skipped = [s for s in summaries if s.get("status") in ("already_exists", "skipped")]
     lines = [
         f"Steep Society 주간 자동화 결과",
         f"성공 {len(success)} / 실패 {len(failed)} / 건너뜀 {len(skipped)}",
@@ -161,7 +161,7 @@ def render_text(report, articles_by_date):
     for s in summaries:
         date = s.get("date")
         if s.get("status") != "success":
-            lines.append(f"[{date}] {s.get('status').upper()} — {s.get('error','')[:200]}")
+            lines.append(f"[{date}] {s.get('status').upper()} — {(s.get('error') or '')[:200]}")
             lines.append("")
             continue
         article = articles_by_date.get(date) or {}
@@ -211,7 +211,7 @@ def main():
     summaries = report.get("summaries", [])
     dates = [s.get("date","") for s in summaries if s.get("date")]
     success = sum(1 for s in summaries if s.get("status") == "success")
-    failed = sum(1 for s in summaries if s.get("status") == "failed")
+    failed = sum(1 for s in summaries if s.get("status") not in ("success", "already_exists", "skipped"))
     range_str = f"{dates[0]} ~ {dates[-1]}" if dates else "(no dates)"
 
     subject = f"[Steep Society] 자동 발행 결과 {range_str} — 성공 {success} / 실패 {failed}"

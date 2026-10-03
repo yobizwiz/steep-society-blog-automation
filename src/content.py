@@ -102,6 +102,9 @@ def _build_few_shot_block(few_shot, max_chars_per=3500):
 _NO_TEMP_MODELS = set()  # models that reject the deprecated `temperature` param (e.g. Opus 4.8+)
 
 def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=0.7):
+    from utils import CONFIG_DIR
+    if not system.startswith("You are an independent factual and safety editor"):
+        system += "\n\n" + (CONFIG_DIR / "editorial_policy.md").read_text(encoding="utf-8")
     def _post(send_temp):
         payload = {"model": model, "max_tokens": max_tokens,
                    "system": ([{"type": "text", "text": system,
@@ -186,9 +189,9 @@ OUTPUT_SCHEMA_INSTRUCTION = """OUTPUT FORMAT - return ONE JSON object with EXACT
     {"role": "body", "section": "...", "prompt": "...", "filename": "...", "alt": "..."}
   ],
   "internal_judgment": {
-    "content_quality": {"score": 10, "reason": "..."},
-    "onpage_seo": {"score": 10, "reason": "..."},
-    "conversion_alignment": {"score": 10, "reason": "..."},
+    "content_quality": {"score": 8, "reason": "evidence-based assessment; lower if warranted"},
+    "onpage_seo": {"score": 8, "reason": "evidence-based assessment; lower if warranted"},
+    "conversion_alignment": {"score": 8, "reason": "evidence-based assessment; lower if warranted"},
     "ai_search_optimization": {"score": 10, "reason": "Quick Answer 2-3문단 내, 단일 사실 문장, 숫자/측정 풍부, FAQ+Article JSON-LD"},
     "eeat": {"score": 10, "reason": "Experience+Expertise+Authoritativeness+Trustworthiness"},
     "body_judgment": "...",
@@ -218,7 +221,7 @@ def _build_user_prompt(*, date, topic, post_type, subtype, cta, hub_links, extra
             "  Button text (natural, product-name based - NOT a collection name): " + cta["title"] + "\n"
             "  Product handle: " + cta["handle"] + "\n"
             "  Full product URL: " + cta["url"] + "\n"
-            "  The single CTA after Quick Recap links to THIS product page. Also link this product inline in the body at least twice as the 'Our Pick' / 'Best Value'.\n"
+            "  The single CTA after Quick Recap links to THIS product page. Only mention this product when supported and relevant; do not force rankings or repetitions.\n"
         )
     else:
         cta_block = (
@@ -241,8 +244,8 @@ def _build_user_prompt(*, date, topic, post_type, subtype, cta, hub_links, extra
         "Image budget: " + image_count + "\n"
         + cta_block + hub_block + notes + "\n\n"
         "Generate the complete article now per the system prompt's output format.\n\n"
-        "CRITICAL FIRST-PASS 10/10 STANDARD:\n"
-        "Your FIRST output MUST score 10/10/10. Before returning, verify ALL 17 pre-flight items in section 14c:\n"
+        "CRITICAL FIRST-PASS EVIDENCE STANDARD:\n"
+        "Score honestly; do not force a perfect score. Before returning, verify ALL 17 pre-flight items in section 14c:\n"
         "  STRUCTURE (10): no h1, table <=5 rows, exactly 1 CTA after Quick Recap, no content below CTA, "
         "CTA button text matches its target 1:1 (collection name for a collection CTA; the given product-name phrase for a product CTA), all links https://steep-society.com/, F first/(C) parens, "
         "correct image count, body image placeholders inserted, slug lowercase+hyphens.\n"
@@ -250,7 +253,7 @@ def _build_user_prompt(*, date, topic, post_type, subtype, cta, hub_links, extra
         "FAQ section IMMEDIATELY followed by JSON-LD FAQPage <script> tag in body_html.\n"
         "  CONVERSION (2): every product category mentioned in body is CTA-matched or has inline link "
         "(zero orphan purchase intent), Quick Answer in first 2-3 paragraphs. For a product CTA (margin 'Our Pick'), "
-        "link that product inline in the body at least twice and frame it as 'our pick'/'great value' with NO price numbers.\n"
+        "explain relevance honestly without unsupported best-value or comparative claims.\n"
         "If any item fails, FIX it before returning. Mark 10/10 only if every item passes."
     )
 
@@ -280,7 +283,7 @@ def generate_draft(*, topic, date, post_type, subtype, cta, hub_links=None, extr
     raise RuntimeError("draft 3회 시도 모두 실패: " + str(last_err))
 
 
-CRITIQUE_SYSTEM = """You are a senior tea-blog editor reviewing a Steep Society draft. Find weaknesses ruthlessly. Quality target: 10/10.
+CRITIQUE_SYSTEM = """You are a senior tea-blog editor reviewing a Steep Society draft. Find weaknesses ruthlessly. Report concrete weaknesses and unsupported claims; do not force 10/10.
 
 Output JSON:
 {
@@ -455,8 +458,9 @@ def gemini_review(article, env):
     _ns = raw_body.replace(" ", "")
     _has_faq = '"@type":"FAQPage"' in _ns
     _has_art = '"@type":"Article"' in _ns
-    _has_recap = "Quick Recap" in raw_body
-    _cta_n = len(re.findall(r"border-radius:\s*999px", raw_body))
+    _has_recap = "quick recap" in raw_body.casefold()
+    from html_checks import Document
+    _cta_n = len(Document(raw_body).ctas())
     _col_n = len(re.findall(r"/collections/[a-z0-9\-]+", raw_body))
     facts_block = (
         "STRUCTURAL FACTS (verified programmatically from raw HTML - TRUST THESE; do NOT deduct for a missing element the facts say is present):\n"
@@ -529,7 +533,7 @@ def gemini_review(article, env):
                 import time
                 time.sleep(5 * attempt)
     log(f"[Pass 4b] Gemini review failed after 3 attempts: {last_err} — continuing without it", "WARN")
-    return None
+    raise RuntimeError("Independent model review unavailable")
 
 
 def merge_gemini_into_judgment(article, gemini):
@@ -542,36 +546,10 @@ def merge_gemini_into_judgment(article, gemini):
     return article
 
 
-def combined_min_score(article):
-    """Min across all reviewer models — Anthropic 5 + Gemini 5 (only if Gemini succeeded).
-    
-    KEY: if Gemini missing/empty, its scores are NOT counted as 0 — they are excluded.
-    Only valid integer scores enter the min."""
-    DIMS = ("content_quality", "onpage_seo", "conversion_alignment",
-            "ai_search_optimization", "eeat")
-    j = article.get("internal_judgment", {}) or {}
-    scores = []
-    for k in DIMS:
-        obj = j.get(k)
-        if not isinstance(obj, dict): continue
-        v = obj.get("score")
-        if v is None: continue
-        try: scores.append(int(v))
-        except (TypeError, ValueError): pass
-    gem = j.get("gemini_review")
-    if isinstance(gem, dict):
-        for k in DIMS:
-            obj = gem.get(k)
-            if not isinstance(obj, dict): continue
-            v = obj.get("score")
-            if v is None: continue
-            try: scores.append(int(v))
-            except (TypeError, ValueError): pass
-    return min(scores) if scores else 0
 
 
 def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=None,
-                          extra_notes=None, target_score=10, max_perfection_passes=2):
+                          extra_notes=None, target_score=8, max_perfection_passes=2):
     env = load_env()
     user_prompt = _build_user_prompt(date=date, topic=topic, post_type=post_type,
                                       subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=extra_notes)
@@ -586,6 +564,7 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
         gemini = gemini_review(best, env)
         best = merge_gemini_into_judgment(best, gemini)
     except Exception as e:
+        best["generation_review_errors"] = ["Independent model review unavailable"]
         log(f"[Pass 4b] Gemini review error: {e} — continuing without", "WARN")
 
     from perfection import perfection_pass, min_score
@@ -603,6 +582,7 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
                 gem2 = gemini_review(cand, env)
                 cand = merge_gemini_into_judgment(cand, gem2)
             except Exception as e:
+                cand["generation_review_errors"] = ["Independent model review unavailable"]
                 log(f"[Pass 4b] post-perfection Gemini error: {e}", "WARN")
         except Exception as e:
             log("perfection failed: " + str(e), "WARN")
@@ -616,4 +596,10 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
             log("score dropped (" + str(cs) + " < " + str(best_score) + ") - keep previous", "WARN")
             break
     log("\n=== final min score: " + str(best_score) + "/10 ===")
+    best["generation_status"] = "ready_for_validation" if best_score >= target_score else "review_required"
     return best
+
+
+def combined_min_score(article):
+    from release_gate import strict_min_score
+    return strict_min_score(article)

@@ -1,5 +1,9 @@
 name: Re-score Article (one-off)
 on: { workflow_dispatch: {} }
+concurrency:
+  group: blog-publication-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   rescore:
     runs-on: ubuntu-latest
