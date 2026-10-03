@@ -365,7 +365,7 @@ class Regressions(unittest.TestCase):
             self.assertTrue(list(Path(self.tmp.name).glob('*-final.json')))
 
     def test_care_cta_never_injects_unrelated_bestseller(self):
-        if not (ROOT/'src/product_cta.py').exists(): return
+        if not (ROOT/'src/product_cta.py').exists(): self.skipTest('No product_cta helper in this repository')
         import product_cta
         a=fixture()
         def unexpected(*args): self.fail('A generic care CTA must not trigger catalog fallback')
