@@ -14,11 +14,49 @@ from release_gate import ReviewRequired, digest
 from html_checks import Document
 
 
+def body_text_blocks(doc):
+    """Keep structural boundaries without duplicating nested containers' text."""
+    boundaries = {'p', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'td', 'th',
+                  'figcaption', 'blockquote', 'div', 'section', 'article', 'aside',
+                  'header', 'footer', 'dt', 'dd', 'pre', 'address', 'table', 'tr',
+                  'thead', 'tbody', 'tfoot', 'ul', 'ol', 'dl', 'figure', 'hr'}
+    output, fragments = [], []
+
+    def flush():
+        text = ' '.join(''.join(fragments).split())
+        if text:
+            output.append(text)
+        fragments.clear()
+
+    def visit(node):
+        if node.tag in ('script', 'style'):
+            return
+        if node.tag == 'br':
+            # A visual line break must not separate "Never" from its instruction.
+            fragments.append(' ')
+            return
+        boundary = node.tag in boundaries
+        if boundary:
+            flush()
+        for part in node.parts:
+            if isinstance(part, str):
+                fragments.append(part)
+            else:
+                visit(part)
+        if boundary:
+            flush()
+
+    visit(doc.root)
+    flush()
+    return output
+
+
 def factual_payload(article):
     doc = Document(article.get('body_html', ''))
+    blocks = body_text_blocks(doc)
     # Presentation and uploaded image URLs cannot approve new text, links or schema claims.
     return {k: article.get(k) for k in ('title', 'summary', 'meta_title', 'meta_description')} | {
-        'text': ' '.join(doc.root.visible_text().split()),
+        'text': ' '.join(blocks), 'blocks': blocks,
         'links': [n.attrs.get('href') for n in doc.nodes('a')],
         'schema': [n.text for n in doc.nodes('script')],
         'cta': article.get('_release_context', {}).get('cta_url')}
@@ -52,8 +90,11 @@ Read EVERY assertion in title, metadata, body, links, and schema. Classify claim
 Ordinary subjective style advice needs no citation. Exact measurements presented as facts, medical/food/fire/electrical safety, dilution limits, material load/heat ratings, caffeine/chemistry, comparative rankings, product specifications/availability, shipping/returns, certification/FDA/USDA assertions, and purported firsthand testing require matching PRIMARY evidence provided below. Never invent facts, evidence, URLs, experience or reviewer scores.
 Manufacturer instructions for the specific product override generic advice. Reject unsupported precise recommendations. Evidence must support the complete claim, product, conditions, population and date, not merely mention the topic. Check recipe durations and physical calculations for completeness and consistency. A store catalog is not evidence for an independent safety claim. For alleged firsthand testing require documented method/results; absent evidence, flag it.
 Check that the CTA fits the topic and brand intent. Do not force a product into a care/information article. Each consequential claim must appear in claims with verbatim quote, category, source_id, exact source_excerpt, and a support_explanation. Unsupported claims must appear in issues with a concrete reason and suggested correction. For a claim needing no external evidence, omit it from claims.
-The input includes risk_sentences_requiring_assessment. Account for EVERY listed sentence with its COMPLETE verbatim sentence in claims or issues; a word or partial clause is not complete coverage. Preserve negation, qualifications and conditions. A listed sentence is a coverage checkpoint, not a determination that its advice is false. Do not add an unrelated supported claim to clear unreviewed safety language.
+The article includes structural text blocks. Risk checkpoints never span different blocks; a block without terminal punctuation is still a complete checkpoint. Headings and table headers can contain assertions and are not automatically exempt. The input includes risk_sentences_requiring_assessment. Account for EVERY listed sentence with its COMPLETE verbatim sentence in claims or issues; a word or partial clause is not complete coverage. Preserve negation, qualifications and conditions. A listed sentence is a coverage checkpoint, not a determination that its advice is false. Do not add an unrelated supported claim to clear unreviewed safety language.
 Return JSON only: {"coverage_complete":true,"claims":[{"quote":"verbatim article text","category":"safety|specification|policy|experience|quantitative|ranking|availability|other","source_id":"id","source_excerpt":"verbatim source excerpt","support_explanation":"why full claim is supported"}],"issues":[{"quote":"...","reason":"...","correction":"..."}],"cta_relevant":true}. Empty sources cannot substantiate claims. Do not manufacture evidence to pass."""
+
+
+REVIEW_MAX_TOKENS = 6000
 
 
 # Coverage tripwire, not a list of prohibited advice. Correct warnings and rejected
@@ -83,7 +124,9 @@ def strict_review_json(text):
 
 def risk_sentences(payload):
     """Deterministic coverage checkpoints, not a factual or safety verdict."""
-    sentences = re.split(r'(?<=[.!?])\s+', payload['text'])
+    blocks = payload.get('blocks', [payload['text']])
+    sentences = [sentence for block in blocks
+                 for sentence in re.split(r'(?<=[.!?])\s+', block)]
     return list(dict.fromkeys(s.strip() for s in sentences if RISK_COVERAGE.search(s)))
 
 
@@ -101,6 +144,17 @@ def missing_risk_sentences(sentences, review):
 def review_facts(article, env, *, reviewer=None, sources=None):
     payload = factual_payload(article)
     checkpoints = risk_sentences(payload)
+    metrics = {'checkpoint_count': len(checkpoints),
+               'checkpoint_characters': sum(map(len, checkpoints)),
+               'max_checkpoint_characters': max(map(len, checkpoints), default=0),
+               'max_output_tokens': REVIEW_MAX_TOKENS,
+               'execution': 'api' if reviewer is None else 'injected_reviewer',
+               'response_received': False, 'model': None, 'stop_reason': None,
+               'input_tokens': None, 'output_tokens': None,
+               'cache_creation_input_tokens': None, 'cache_read_input_tokens': None}
+    # Runtime-owned and saved even when truncation/JSON parsing holds the article.
+    article['fact_review_metrics'] = metrics
+    response_metadata = {}
     try:
         sources = load_sources() if sources is None else sources
         evidence_digest = digest(sources)
@@ -112,9 +166,15 @@ def review_facts(article, env, *, reviewer=None, sources=None):
                 return strict_review_json(_claude_call(api_key=env['ANTHROPIC_API_KEY'],
                     model=env.get('ANTHROPIC_REVIEW_MODEL') or env['ANTHROPIC_MODEL'],
                     system=REVIEW_SYSTEM, messages=[{'role': 'user', 'content': prompt}],
-                    max_tokens=6000, temperature=0, require_complete=True))
-        result = reviewer(json.dumps({'article': payload, 'primary_sources': sources,
-                                     'risk_sentences_requiring_assessment': checkpoints}, ensure_ascii=False))
+                    max_tokens=REVIEW_MAX_TOKENS, temperature=0, require_complete=True,
+                    response_metadata=response_metadata))
+        try:
+            result = reviewer(json.dumps({'article': payload, 'primary_sources': sources,
+                                         'risk_sentences_requiring_assessment': checkpoints}, ensure_ascii=False))
+        finally:
+            if response_metadata:
+                metrics.update(response_metadata)
+                metrics['response_received'] = True
         if (not isinstance(result, dict) or result.get('coverage_complete') is not True
                 or result.get('cta_relevant') is not True or not isinstance(result.get('issues'), list)
                 or not isinstance(result.get('claims'), list)):
@@ -141,6 +201,7 @@ def review_facts(article, env, *, reviewer=None, sources=None):
                 'reason': 'coverage_incomplete: risk sentence lacks complete contextual assessment'})
         result['risk_sentence_coverage'] = {'total': len(checkpoints),
             'covered': len(checkpoints) - len(missing), 'missing': missing}
+        result['metrics'] = dict(metrics)
         result.update({'input_sha256': key, 'evidence_sha256': evidence_digest,
                        'status': 'review_required' if result['issues'] else 'passed'})
         article['fact_review'] = result

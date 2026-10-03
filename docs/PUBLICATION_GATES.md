@@ -61,3 +61,9 @@ STEEP fix_publish_dates and collection_fix now stop before credential loading or
 Draft, critique, revision, cross-review and perfection prompts now receive the same locally validated primary-source snapshots used by factual review. Source data is supplied as reference JSON, not trusted instructions. Hash, expiry or read failures stop the pass before paid transport. Empty libraries permit ordinary editorial advice but cannot substantiate safety, quantitative, policy or product claims; an unanswerable factual topic must remain unresolved. Sources and prior drafts do not authorize changing the scheduled CTA.
 
 No live pass-rate or cost reduction has been measured. Adding source text increases input tokens; it does not guarantee approval or zero regeneration. Factual review remains independent. Model selection, call counts and final publication gates are unchanged. The existing perfection loop already skips improvement when the target score is met.
+
+## Block-aware factual coverage (2026-10-03)
+
+Factual text preserves paragraph, list-item, table-cell, caption and other block boundaries before sentence splitting. Nested blocks are emitted once; inline emphasis and line breaks preserve each block's context. Headings and table headers remain eligible because they can contain consequential assertions. Blanket heading exclusion and partial-word coverage are not accepted; non-assertive risk headings can still require contextual review.
+
+Runtime fact_review_metrics records checkpoint count/character lengths, fixed output budget, response model, actual provider token usage and stop reason. Missing usage is null, never an estimated zero. Metrics survive truncated or malformed factual responses and cannot approve them. The 6000 output-token cap and mandatory end_turn/strict JSON remain unchanged. No live model run has measured the effect on cost, output capacity or factual accuracy.

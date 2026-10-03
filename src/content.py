@@ -101,7 +101,7 @@ def _build_few_shot_block(few_shot, max_chars_per=3500):
 
 _NO_TEMP_MODELS = set()  # models that reject the deprecated `temperature` param (e.g. Opus 4.8+)
 
-def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=0.7, *, require_complete=False):
+def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=0.7, *, require_complete=False, response_metadata=None):
     from utils import CONFIG_DIR
     if not system.startswith("You are an independent factual and safety editor"):
         system += "\n\n" + (CONFIG_DIR / "editorial_policy.md").read_text(encoding="utf-8")
@@ -132,6 +132,13 @@ def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=
                 raise RuntimeError("Claude API HTTP " + str(e2.code) + ": " + e2.read().decode("utf-8", errors="ignore")[:1000])
         else:
             raise RuntimeError("Claude API HTTP " + str(e.code) + ": " + body_text)
+    if response_metadata is not None:
+        response_metadata.update({'model': data.get('model') or model,
+                                  'stop_reason': data.get('stop_reason')})
+        usage = data.get('usage') or {}
+        for key in ('input_tokens', 'output_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens'):
+            value = usage.get(key) if isinstance(usage, dict) else None
+            response_metadata[key] = value if type(value) is int and value >= 0 else None
     if require_complete and data.get("stop_reason") != "end_turn":
         raise RuntimeError("Factual review did not complete normally")
     parts = data.get("content", [])
