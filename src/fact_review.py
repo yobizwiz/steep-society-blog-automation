@@ -101,6 +101,7 @@ REVIEW_MAX_TOKENS = 6000
 # quotations can pass with contextual review and matching primary evidence.
 RISK_COVERAGE = re.compile(
     r'\b(?:FDA|USDA|microwav(?:e|ing)|unattended|flash\s*point|dilut(?:e|ion|ing)|'
+    r'overnight|carrier[ -]oil|allerg\w*|dissolv(?:e|es|ed|ing)|'
     r'caffeine[ -]free|decaf(?:feinated)?|non[ -]?toxic|food[ -]safe|'
     r'(?:oven|dishwasher)[ -]safe|toxic|burn(?:ing|s)?|fire|children|pets|pregnan\w*)\b|'
     r'\b(?:safe|unsafe|never|burn|fire|heat|oil|candle|warmer|diffuser|toxic)\b'

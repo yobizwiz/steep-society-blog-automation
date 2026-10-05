@@ -1,7 +1,6 @@
-name: Patch Body Image SEO Tags (One-shot)
+name: Image SEO Candidate Report (Read-only)
 
-# 기존 본문 <img> 태그에 SEO 속성 추가 (width/height/decoding/srcset/sizes/title).
-# 이미지 새로 안 만들고 HTML만 다시 씀. idempotent — 이미 새 형식인 글은 건너뜀.
+# Report candidate articles only. No article updates or paid generation.
 
 on:
   workflow_dispatch:
@@ -11,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  patch:
+  report:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -30,5 +29,5 @@ jobs:
           SHOPIFY_ADMIN_TOKEN=${{ secrets.SHOPIFY_ADMIN_TOKEN }}
           SHOPIFY_BLOG_HANDLE=${{ secrets.SHOPIFY_BLOG_HANDLE }}
           EOF
-      - name: Run patch
+      - name: Report candidates (GET-only)
         run: python src/patch_img_seo.py
