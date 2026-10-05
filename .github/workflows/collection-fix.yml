@@ -1,5 +1,9 @@
 name: Collection Fix (one-off)
 on: { workflow_dispatch: {} }
+concurrency:
+  group: blog-publication-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   fix:
     runs-on: ubuntu-latest

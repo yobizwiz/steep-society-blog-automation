@@ -18,6 +18,8 @@ from content import (
 )
 from perfection import perfection_pass, min_score
 from validators import validate
+from release_gate import require_valid
+from fact_review import review_facts
 
 
 def get_state_path(date, step):
@@ -86,10 +88,10 @@ def main():
             current = load_state(date, "review")
         cur_score = min_score(current)
         log("current min: " + str(cur_score) + "/10")
-        if cur_score >= 10:
-            log("already 10/10")
+        if cur_score >= 8:
+            log("editorial threshold met; factual gate still required")
             return
-        cand = perfection_pass(current, env)
+        cand = perfection_pass(current, env, post_type=entry.get("type", "longtail"), cta=cta)
         cand_score = min_score(cand)
         if cand_score >= cur_score:
             save_state(date, "perfection", cand)
@@ -110,6 +112,9 @@ def main():
         for ww in v["warnings"]:
             log("  W: " + ww["rule"] + ": " + str(ww["detail"]), "WARN")
         article_path = OUTPUT_DIR / (date + "-article.json")
+        article_path.write_text(json.dumps(final, ensure_ascii=False, indent=2), encoding="utf-8")
+        require_valid(final, post_type=entry.get("type", "longtail"))
+        review_facts(final, env)
         article_path.write_text(json.dumps(final, ensure_ascii=False, indent=2), encoding="utf-8")
         log("final saved: " + str(article_path))
         log("min score: " + str(min_score(final)) + "/10")

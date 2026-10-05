@@ -1,29 +1,20 @@
 #!/usr/bin/env python3
-"""Upgrade existing body image <img> tags with full SEO attributes (no image regen).
-
-Idempotent: skips articles whose img tags already have decoding="async" (the marker
-that they were patched). Safe to re-run.
-
-What it adds: explicit width/height, decoding=async, srcset+sizes for responsive
-delivery via Shopify CDN, title attr. Preserves the original src and alt.
-
-Image generation quota is NOT used by this script — it only rewrites HTML.
-"""
+"""Read-only image SEO candidate report. Does not update Shopify articles."""
 from __future__ import annotations
 import json, re, sys, urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from utils import load_env, log
+from utils import load_env, log, OUTPUT_DIR
+from release_gate import write_json
 
-API = "2024-10"
+API = "2026-10"
 
 
-def shop_req(env, path, method="GET", payload=None):
+def shop_req(env, path):
     store = env["SHOPIFY_STORE_URL"].replace("https://", "").replace("http://", "").rstrip("/")
     url = f"https://{store}/admin/api/{API}/{path}"
-    data = json.dumps(payload).encode() if payload else None
-    req = urllib.request.Request(url, method=method, data=data, headers={
+    req = urllib.request.Request(url, method="GET", headers={
         "X-Shopify-Access-Token": env["SHOPIFY_ADMIN_TOKEN"],
         "Accept": "application/json", "Content-Type": "application/json",
     })
@@ -32,12 +23,8 @@ def shop_req(env, path, method="GET", payload=None):
 
 
 def get_blog_id(env):
-    data, _ = shop_req(env, "blogs.json")
-    handle = env.get("SHOPIFY_BLOG_HANDLE", "")
-    for b in data["blogs"]:
-        if not handle or b["handle"] == handle:
-            return b["id"]
-    return data["blogs"][0]["id"]
+    from safe_publish import get_blog_id as scoped_blog_id
+    return scoped_blog_id(env, env['SHOPIFY_BLOG_HANDLE'])
 
 
 def fetch_all(env, blog_id):
@@ -106,25 +93,18 @@ def upgrade_body(body_html):
 def main():
     env = load_env()
     blog_id = get_blog_id(env)
-    arts = fetch_all(env, blog_id)
-    log(f"전체 {len(arts)}편")
-    patched = skipped = errors = 0
-    for a in arts:
-        try:
-            new_body, n = upgrade_body(a.get("body_html") or "")
-            if n == 0:
-                skipped += 1
-                continue
-            shop_req(env, f"blogs/{blog_id}/articles/{a['id']}.json", method="PUT",
-                     payload={"article": {"id": int(a["id"]), "body_html": new_body}})
-            patched += 1
-            log(f"  ✅ patched {n} img(s) — {a.get('title','')[:50]}")
-        except Exception as e:
-            errors += 1
-            log(f"  ❌ error on {a.get('title','')[:50]}: {e}", "WARN")
-    log(f"\n=== 완료 — 패치 {patched} / 이미 새 형식 {skipped} / 오류 {errors} ===")
-    print(json.dumps({"total": len(arts), "patched": patched, "skipped": skipped, "errors": errors}, ensure_ascii=False))
+    articles = fetch_all(env, blog_id)
+    candidates = []
+    for article in articles:
+        _, count = upgrade_body(article.get('body_html') or '')
+        if count:
+            candidates.append({'article_id': article['id'], 'title': article.get('title', ''),
+                               'image_count': count, 'status': 'review_required'})
+    report = {'mode': 'report_only', 'total': len(articles), 'candidates': candidates, 'writes': 0}
+    write_json(OUTPUT_DIR / 'image-seo-candidates.json', report)
+    log('Read-only image SEO report: ' + str(len(candidates)) + ' candidates; 0 writes')
+    return report
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -118,6 +118,8 @@ def shopify_fetch_all_articles(env, blog_handle):
 
 def shopify_set_upgraded_metafield(env, article_id, value):
     """Mark article as upgraded via metafield custom.upgraded_v2."""
+    from release_gate import block_legacy_write
+    block_legacy_write()
     store = env["SHOPIFY_STORE_URL"]
     token = env["SHOPIFY_ADMIN_TOKEN"]
     url = f"https://{store}/admin/api/2025-01/articles/{article_id}/metafields.json"
@@ -152,6 +154,8 @@ def shopify_fetch_article_body(env, article_id):
 
 def shopify_update_body(env, article_id, body_html):
     # Preserve publish schedule (a plain REST PUT republishes a scheduled article).
+    from release_gate import block_legacy_write
+    block_legacy_write()
     from shopify_pub import update_article_body
     return update_article_body(env, article_id, body_html)
 
@@ -199,6 +203,8 @@ def _guess_collection(title, env):
 def regenerate_article(article_info, env, before_min, before_article):
     """Full regeneration fallback: rewrite article from scratch + new images.
     Keeps handle (URL) + scheduled date. Score guard: only replace if better."""
+    from release_gate import block_legacy_write
+    block_legacy_write()
     aid = article_info["id"]
     title = before_article.get("title","")
     log(f"  🔄 FULL REGENERATION: {title[:50]}")
@@ -268,6 +274,8 @@ def regenerate_article(article_info, env, before_min, before_article):
 
 def process_one(article_info, env):
     """Score → upgrade if needed → update Shopify."""
+    from release_gate import block_legacy_write
+    block_legacy_write()
     aid = article_info['id']
     # Fetch full article body
     full = shopify_fetch_article_body(env, aid)
@@ -414,6 +422,8 @@ def save_cursor(blog_handle, cursor):
 
 
 def main():
+    from release_gate import block_legacy_write
+    block_legacy_write()
     ap = argparse.ArgumentParser()
     ap.add_argument("--blog_handle", required=True, help="e.g. steep-society-journal or home-cafe-baking")
     ap.add_argument("--batch_size", type=int, default=15)

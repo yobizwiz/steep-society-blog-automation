@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json, re, urllib.error, urllib.request
 from utils import load_env, load_few_shot_articles, load_system_prompt, log
+from writer_evidence import ground_writer_prompt
 
 
 BLOG_WRITING_RULES = """## ⚠️ AUTHORITATIVE BLOG WRITING RULES — HIGHEST PRIORITY
@@ -58,8 +59,7 @@ never repeat an anchor, never paste bare URLs.
 
 ## CONTENT QUALITY (E-E-A-T)
 - Open with a 2–3 sentence direct answer, then expand.
-- Concrete numbers in every post: steep temperatures (°F/°C), steep times, leaf-to-water
-  ratios (g per 8oz), caffeine levels (mg ranges), resteep counts.
+- Include numeric brewing guidance only when the supplied primary source supports the specific tea, product and conditions. Omit unsupported precision.
 - Write like a tea sommelier — specific and practical brewing guidance, but never claim personal testing, named staff, or experiments that cannot be verified. Author is always the brand (Organization), never a named person.
 - 1,200–1,800 words for guides; 600–900 for quick-fix posts. End with a 3–5 question FAQ.
 - Title under 60 characters; meta description 150–160 characters with the primary keyword.
@@ -101,7 +101,10 @@ def _build_few_shot_block(few_shot, max_chars_per=3500):
 
 _NO_TEMP_MODELS = set()  # models that reject the deprecated `temperature` param (e.g. Opus 4.8+)
 
-def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=0.7):
+def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=0.7, *, require_complete=False, response_metadata=None):
+    from utils import CONFIG_DIR
+    if not system.startswith("You are an independent factual and safety editor"):
+        system += "\n\n" + (CONFIG_DIR / "editorial_policy.md").read_text(encoding="utf-8")
     def _post(send_temp):
         payload = {"model": model, "max_tokens": max_tokens,
                    "system": ([{"type": "text", "text": system,
@@ -129,6 +132,15 @@ def _claude_call(api_key, model, system, messages, max_tokens=8000, temperature=
                 raise RuntimeError("Claude API HTTP " + str(e2.code) + ": " + e2.read().decode("utf-8", errors="ignore")[:1000])
         else:
             raise RuntimeError("Claude API HTTP " + str(e.code) + ": " + body_text)
+    if response_metadata is not None:
+        response_metadata.update({'model': data.get('model') or model,
+                                  'stop_reason': data.get('stop_reason')})
+        usage = data.get('usage') or {}
+        for key in ('input_tokens', 'output_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens'):
+            value = usage.get(key) if isinstance(usage, dict) else None
+            response_metadata[key] = value if type(value) is int and value >= 0 else None
+    if require_complete and data.get("stop_reason") != "end_turn":
+        raise RuntimeError("Factual review did not complete normally")
     parts = data.get("content", [])
     text_parts = [p.get("text", "") for p in parts if p.get("type") == "text"]
     return "\n".join(text_parts).strip()
@@ -186,11 +198,11 @@ OUTPUT_SCHEMA_INSTRUCTION = """OUTPUT FORMAT - return ONE JSON object with EXACT
     {"role": "body", "section": "...", "prompt": "...", "filename": "...", "alt": "..."}
   ],
   "internal_judgment": {
-    "content_quality": {"score": 10, "reason": "..."},
-    "onpage_seo": {"score": 10, "reason": "..."},
-    "conversion_alignment": {"score": 10, "reason": "..."},
-    "ai_search_optimization": {"score": 10, "reason": "Quick Answer 2-3문단 내, 단일 사실 문장, 숫자/측정 풍부, FAQ+Article JSON-LD"},
-    "eeat": {"score": 10, "reason": "Experience+Expertise+Authoritativeness+Trustworthiness"},
+    "content_quality": {"score": 8, "reason": "evidence-based assessment; lower if warranted"},
+    "onpage_seo": {"score": 8, "reason": "evidence-based assessment; lower if warranted"},
+    "conversion_alignment": {"score": 8, "reason": "evidence-based assessment; lower if warranted"},
+    "ai_search_optimization": {"score": 0, "reason": "Quick Answer 2-3문단 내, 단일 사실 문장, 숫자/측정 풍부, FAQ+Article JSON-LD"},
+    "eeat": {"score": 0, "reason": "Experience+Expertise+Authoritativeness+Trustworthiness"},
     "body_judgment": "...",
     "page_judgment": "page-level acknowledges template deductions are template issues, not body issues",
     "deductions": []
@@ -218,7 +230,7 @@ def _build_user_prompt(*, date, topic, post_type, subtype, cta, hub_links, extra
             "  Button text (natural, product-name based - NOT a collection name): " + cta["title"] + "\n"
             "  Product handle: " + cta["handle"] + "\n"
             "  Full product URL: " + cta["url"] + "\n"
-            "  The single CTA after Quick Recap links to THIS product page. Also link this product inline in the body at least twice as the 'Our Pick' / 'Best Value'.\n"
+            "  The single CTA after Quick Recap links to THIS product page. Only mention this product when supported and relevant; do not force rankings or repetitions.\n"
         )
     else:
         cta_block = (
@@ -241,8 +253,8 @@ def _build_user_prompt(*, date, topic, post_type, subtype, cta, hub_links, extra
         "Image budget: " + image_count + "\n"
         + cta_block + hub_block + notes + "\n\n"
         "Generate the complete article now per the system prompt's output format.\n\n"
-        "CRITICAL FIRST-PASS 10/10 STANDARD:\n"
-        "Your FIRST output MUST score 10/10/10. Before returning, verify ALL 17 pre-flight items in section 14c:\n"
+        "CRITICAL FIRST-PASS EVIDENCE STANDARD:\n"
+        "Score honestly; do not force a perfect score. Before returning, verify ALL 17 pre-flight items in section 14c:\n"
         "  STRUCTURE (10): no h1, table <=5 rows, exactly 1 CTA after Quick Recap, no content below CTA, "
         "CTA button text matches its target 1:1 (collection name for a collection CTA; the given product-name phrase for a product CTA), all links https://steep-society.com/, F first/(C) parens, "
         "correct image count, body image placeholders inserted, slug lowercase+hyphens.\n"
@@ -250,8 +262,8 @@ def _build_user_prompt(*, date, topic, post_type, subtype, cta, hub_links, extra
         "FAQ section IMMEDIATELY followed by JSON-LD FAQPage <script> tag in body_html.\n"
         "  CONVERSION (2): every product category mentioned in body is CTA-matched or has inline link "
         "(zero orphan purchase intent), Quick Answer in first 2-3 paragraphs. For a product CTA (margin 'Our Pick'), "
-        "link that product inline in the body at least twice and frame it as 'our pick'/'great value' with NO price numbers.\n"
-        "If any item fails, FIX it before returning. Mark 10/10 only if every item passes."
+        "explain relevance honestly without unsupported best-value or comparative claims.\n"
+        "If any item fails, FIX it before returning. Score each dimension honestly and state unresolved weaknesses; factual approval is separate."
     )
 
 
@@ -262,6 +274,7 @@ def generate_draft(*, topic, date, post_type, subtype, cta, hub_links=None, extr
     full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + "\n\n" + BLOG_WRITING_RULES
     user_msg = _build_user_prompt(date=date, topic=topic, post_type=post_type,
                                    subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=extra_notes)
+    full_system, user_msg = ground_writer_prompt(full_system, user_msg)
     last_err = None
     for attempt in range(1, 4):
         log("[Pass 1] draft attempt " + str(attempt) + "/3 (model=" + env["ANTHROPIC_MODEL"] + ")")
@@ -280,7 +293,7 @@ def generate_draft(*, topic, date, post_type, subtype, cta, hub_links=None, extr
     raise RuntimeError("draft 3회 시도 모두 실패: " + str(last_err))
 
 
-CRITIQUE_SYSTEM = """You are a senior tea-blog editor reviewing a Steep Society draft. Find weaknesses ruthlessly. Quality target: 10/10.
+CRITIQUE_SYSTEM = """You are a senior tea-blog editor reviewing a Steep Society draft. Find weaknesses ruthlessly. Report concrete weaknesses and unsupported claims; do not force 10/10.
 
 Output JSON:
 {
@@ -318,9 +331,10 @@ def _call_and_parse_with_retry(*, label, max_attempts, call_fn):
 def self_critique(draft, env):
     log("[Pass 2] self-critique")
     user_msg = "Review this draft article JSON:\n\n```json\n" + json.dumps(draft, ensure_ascii=False, indent=2) + "\n```"
+    system, user_msg = ground_writer_prompt(CRITIQUE_SYSTEM, user_msg)
     def _call():
         return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
-                          system=CRITIQUE_SYSTEM, messages=[{"role": "user", "content": user_msg}],
+                          system=system, messages=[{"role": "user", "content": user_msg}],
                           max_tokens=8000, temperature=0.3)
     crit = _call_and_parse_with_retry(label="[Pass 2]", max_attempts=3, call_fn=_call)
     n = sum(len(crit.get(k, [])) for k in ("content_weaknesses", "seo_weaknesses", "conversion_weaknesses", "structure_violations"))
@@ -339,6 +353,7 @@ def revise(draft, critique, env, *, original_user_prompt):
         "## EDITOR CRITIQUE\n\n```json\n" + json.dumps(critique, ensure_ascii=False, indent=2) + "\n```\n\n"
         "Now produce REVISED article JSON. Address every weakness."
     )
+    full_system, user_msg = ground_writer_prompt(full_system, user_msg)
     def _call():
         return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=env["ANTHROPIC_MODEL"],
                           system=full_system, messages=[{"role": "user", "content": user_msg}],
@@ -359,6 +374,7 @@ def cross_review(revised, env, post_type=None):
     suffix = "\n\n## CROSS-MODEL FINAL POLISH\nFinal polish. Tighten weak sentences, fix subtle SEO, verify all hard rules. Return SAME JSON schema. ALWAYS include internal_judgment with ALL FIVE dimensions (content_quality, onpage_seo, conversion_alignment, ai_search_optimization, eeat) - never omit a dimension."
     full_system = sys_prompt + "\n\n" + few_shot + "\n\n" + OUTPUT_SCHEMA_INSTRUCTION + "\n\n" + BLOG_WRITING_RULES + suffix
     user_msg = "Polish this revised draft:\n\n```json\n" + json.dumps(revised, ensure_ascii=False, indent=2) + "\n```"
+    full_system, user_msg = ground_writer_prompt(full_system, user_msg)
     def _call():
         return _claude_call(api_key=env["ANTHROPIC_API_KEY"], model=review_model,
                           system=full_system, messages=[{"role": "user", "content": user_msg}],
@@ -373,7 +389,7 @@ GEMINI_REVIEW_SYSTEM = """You are an independent SEO + content reviewer for a Sh
 1. **content_quality** — Distinct angle, specific actionable info, no fluff, original insight.
 2. **onpage_seo** — Meta title 60 chars or fewer (short, punchy titles for how-to / quick-fix posts are GOOD — do NOT penalize a title for being under 50 chars). Meta description 150-160 ideal, 140-165 acceptable. Primary keyword in title/slug/meta/intro. Table max 5 data rows.
 3. **conversion_alignment** — Exactly ONE CTA block after Quick Recap whose button text matches its collection 1:1. NOTE: inline contextual collection/product links woven into body paragraphs are REQUIRED and GOOD — do NOT penalize them as "orphan mentions". An "orphan mention" is ONLY a product/collection named in text with NO link at all. TRUST the STRUCTURAL FACTS in the user message; never claim Quick Recap, the CTA, or JSON-LD is missing if the facts say it is present. For MARGIN posts whose CTA links to a /products/ page ("Our Pick"), the body MUST also link that same product inline at least once as a natural "our pick"/"best value" recommendation; a product CTA with no supporting inline product link, or a forced/unnatural recommendation, scores conversion_alignment 6 or lower. Collection CTAs (/collections/) on how-to/quick-fix/hub posts are correct - do not penalize them.
-4. **ai_search_optimization** — AI citation-friendly: Quick Answer in 1st-3rd paragraph, single-fact atomic sentences, numbers/measurements, FAQPage + Article JSON-LD inline in body. Optimized for ChatGPT/Perplexity/Google AI Overview citation.
+4. **ai_search_optimization** — AI citation-friendly: Quick Answer in 1st-3rd paragraph, single-fact atomic sentences, source-supported facts where relevant, FAQPage + Article JSON-LD inline in body. Optimized for ChatGPT/Perplexity/Google AI Overview citation.
 5. **eeat** — Google E-E-A-T quality signals: Experience (actual tested insights), Expertise (specific accurate data e.g. brewing temps), Authoritativeness (consistent brand voice), Trustworthiness (no factual errors, no contradictions).
 
 Be brutally honest. Most articles deserve 7-9, not 10. Cite specific weaknesses.
@@ -455,8 +471,9 @@ def gemini_review(article, env):
     _ns = raw_body.replace(" ", "")
     _has_faq = '"@type":"FAQPage"' in _ns
     _has_art = '"@type":"Article"' in _ns
-    _has_recap = "Quick Recap" in raw_body
-    _cta_n = len(re.findall(r"border-radius:\s*999px", raw_body))
+    _has_recap = "quick recap" in raw_body.casefold()
+    from html_checks import Document
+    _cta_n = len(Document(raw_body).ctas())
     _col_n = len(re.findall(r"/collections/[a-z0-9\-]+", raw_body))
     facts_block = (
         "STRUCTURAL FACTS (verified programmatically from raw HTML - TRUST THESE; do NOT deduct for a missing element the facts say is present):\n"
@@ -529,7 +546,7 @@ def gemini_review(article, env):
                 import time
                 time.sleep(5 * attempt)
     log(f"[Pass 4b] Gemini review failed after 3 attempts: {last_err} — continuing without it", "WARN")
-    return None
+    raise RuntimeError("Independent model review unavailable")
 
 
 def merge_gemini_into_judgment(article, gemini):
@@ -542,36 +559,10 @@ def merge_gemini_into_judgment(article, gemini):
     return article
 
 
-def combined_min_score(article):
-    """Min across all reviewer models — Anthropic 5 + Gemini 5 (only if Gemini succeeded).
-    
-    KEY: if Gemini missing/empty, its scores are NOT counted as 0 — they are excluded.
-    Only valid integer scores enter the min."""
-    DIMS = ("content_quality", "onpage_seo", "conversion_alignment",
-            "ai_search_optimization", "eeat")
-    j = article.get("internal_judgment", {}) or {}
-    scores = []
-    for k in DIMS:
-        obj = j.get(k)
-        if not isinstance(obj, dict): continue
-        v = obj.get("score")
-        if v is None: continue
-        try: scores.append(int(v))
-        except (TypeError, ValueError): pass
-    gem = j.get("gemini_review")
-    if isinstance(gem, dict):
-        for k in DIMS:
-            obj = gem.get(k)
-            if not isinstance(obj, dict): continue
-            v = obj.get("score")
-            if v is None: continue
-            try: scores.append(int(v))
-            except (TypeError, ValueError): pass
-    return min(scores) if scores else 0
 
 
 def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=None,
-                          extra_notes=None, target_score=10, max_perfection_passes=2):
+                          extra_notes=None, target_score=8, max_perfection_passes=2):
     env = load_env()
     user_prompt = _build_user_prompt(date=date, topic=topic, post_type=post_type,
                                       subtype=subtype, cta=cta, hub_links=hub_links, extra_notes=extra_notes)
@@ -586,6 +577,7 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
         gemini = gemini_review(best, env)
         best = merge_gemini_into_judgment(best, gemini)
     except Exception as e:
+        best["generation_review_errors"] = ["Independent model review unavailable"]
         log(f"[Pass 4b] Gemini review error: {e} — continuing without", "WARN")
 
     from perfection import perfection_pass, min_score
@@ -597,12 +589,13 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
             break
         log("\n--- perfection iter " + str(i+1) + "/" + str(max_perfection_passes) + " ---")
         try:
-            cand = perfection_pass(best, env, post_type=post_type)
+            cand = perfection_pass(best, env, post_type=post_type, cta=cta)
             # Re-validate with Gemini after perfection
             try:
                 gem2 = gemini_review(cand, env)
                 cand = merge_gemini_into_judgment(cand, gem2)
             except Exception as e:
+                cand["generation_review_errors"] = ["Independent model review unavailable"]
                 log(f"[Pass 4b] post-perfection Gemini error: {e}", "WARN")
         except Exception as e:
             log("perfection failed: " + str(e), "WARN")
@@ -616,4 +609,10 @@ def generate_full_article(*, topic, date, post_type, subtype, cta, hub_links=Non
             log("score dropped (" + str(cs) + " < " + str(best_score) + ") - keep previous", "WARN")
             break
     log("\n=== final min score: " + str(best_score) + "/10 ===")
+    best["generation_status"] = "ready_for_validation" if best_score >= target_score else "review_required"
     return best
+
+
+def combined_min_score(article):
+    from release_gate import strict_min_score
+    return strict_min_score(article)

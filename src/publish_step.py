@@ -13,7 +13,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from utils import OUTPUT_DIR, load_env, log
+from utils import OUTPUT_DIR, CONFIG_DIR, load_env, load_yaml, log
+from release_gate import require_valid, digest, configured_image_model
+from fact_review import review_facts
+from weekly import choose_cta
 from images import generate_image_for_slot
 from shopify_pub import (
     admin_url, create_article, get_blog_id,
@@ -38,11 +41,17 @@ def main():
 
     article_path = OUTPUT_DIR / (date + "-article.json")
     article = json.loads(article_path.read_text(encoding="utf-8"))
+    entry = load_yaml(CONFIG_DIR / "schedule.yaml")[date]
+    cta = choose_cta(entry, load_yaml(CONFIG_DIR / "collections.yaml"))
+    article["_release_context"] = {"date": date, "post_type": entry.get("type", "longtail"), "cta_url": cta["url"], "topic": entry["title"]}
+    require_valid(article, post_type=entry.get("type", "longtail"))
+    review_facts(article, env)
+    fingerprint = digest({k: v for k, v in article.items() if k != "fact_review"})
     images = article.get("images", [])
 
     if args.step == "img":
         idx = args.index
-        if idx >= len(images):
+        if not 0 <= idx < len(images):
             log("invalid index", "ERROR")
             sys.exit(1)
         im = images[idx]
@@ -51,9 +60,10 @@ def main():
             prompt=im["prompt"],
             filename_base=im["filename"],
             api_key=env["GOOGLE_API_KEY"],
-            model=env.get("IMAGEN_MODEL", "imagen-3.0-generate-002"),
+            model=configured_image_model(env),
             variants=args.variants,
             aspect_ratio="16:9",
+            anthropic_key=env["ANTHROPIC_API_KEY"],
         )
         # save webp
         webp_path = OUTPUT_DIR / (date + "-img-" + str(idx) + ".webp")
@@ -68,7 +78,7 @@ def main():
         state = {}
         if state_path.exists():
             state = json.loads(state_path.read_text(encoding="utf-8"))
-        state[str(idx)] = {"url": url, "alt": im["alt"], "filename": result["filename"], "role": im.get("role")}
+        state[str(idx)] = {"url": url, "alt": im["alt"], "filename": result["filename"], "role": im.get("role"), "article_sha256": fingerprint, "vision_verified": result.get("vision_verified") is True}
         state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
         log("uploaded -> " + url)
 
@@ -84,11 +94,14 @@ def main():
         body_uploaded = []
         for i, im in enumerate(images):
             up = state[str(i)]
+            if up.get("article_sha256") != fingerprint or up.get("vision_verified") is not True:
+                raise RuntimeError("Stale or unverified image upload state")
             if im.get("role") == "featured":
                 featured = up
             else:
                 body_uploaded.append({"url": up["url"], "alt": up["alt"], "filename": up["filename"]})
 
+        article["uploaded_images"] = list(state.values())
         body_html = insert_body_images(article["body_html"], body_uploaded)
 
         blog_id = get_blog_id(env, env["SHOPIFY_BLOG_HANDLE"])
@@ -100,7 +113,7 @@ def main():
             scheduled_at=args.scheduled_utc,
         )
         log("admin url: " + admin_url(env, created["id"]))
-        log("public url (after publish): " + public_url(created.get("handle", "")))
+        log("public url (after publish): " + public_url(created.get("handle", ""), env=env))
 
         result_path = OUTPUT_DIR / (date + "-publish-result.json")
         result_path.write_text(json.dumps({
@@ -108,7 +121,7 @@ def main():
             "handle": created.get("handle"),
             "scheduled_at": args.scheduled_utc,
             "admin_url": admin_url(env, created["id"]),
-            "public_url": public_url(created.get("handle", "")),
+            "public_url": public_url(created.get("handle", ""), env=env),
         }, indent=2, ensure_ascii=False), encoding="utf-8")
 
 

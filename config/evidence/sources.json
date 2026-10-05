@@ -1,0 +1,13 @@
+[
+  {
+    "id": "steep-product-specific-brewing",
+    "url": "https://steep-society.com/policies/shipping-policy",
+    "kind": "store_policy",
+    "snapshot": "steep-product-specific-brewing.txt",
+    "sha256": "3dbfd6ce506c0c01656cce6aedc7108eed3d5acb94e5b9b122cb1f693a1a7d4c",
+    "retrieved_at": "2026-10-03T07:57:00Z",
+    "expires_at": "2026-10-10T07:57:00Z",
+    "scope_note": "Brand FAQ on policy page; establishes product-specific guidance only, not brewing temperatures or times.",
+    "retrieval_method": "public web page verified during review; short exact excerpt"
+  }
+]

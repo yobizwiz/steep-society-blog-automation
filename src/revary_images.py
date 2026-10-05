@@ -50,6 +50,8 @@ def _img_tag(url, alt):
 
 
 def revary_one(env, art):
+    from release_gate import block_legacy_write
+    block_legacy_write()
     aid = art["id"]
     title = art.get("title", "")
     body = art.get("body_html", "")
@@ -95,6 +97,8 @@ def revary_one(env, art):
 
 
 def main():
+    from release_gate import block_legacy_write
+    block_legacy_write()
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=8)
     ap.add_argument("--dry-run", action="store_true")

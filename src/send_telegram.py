@@ -60,13 +60,13 @@ def esc(s):
 def render_day(s, article):
     date = s.get("date", "?")
     status = s.get("status", "?")
-    if status == "failed":
+    if status not in ("success", "already_exists", "skipped"):
         return (
             f"\n📅 <b>{esc(date)}</b>\n"
-            f"❌ <b>FAILED</b> — {esc((s.get('title') or '?')[:60])}\n"
+            f"❌ <b>{esc(status.upper())}</b> — {esc((s.get('title') or '?')[:60])}\n"
             f"<i>{esc((s.get('error') or '')[:200])}</i>\n"
         )
-    if status == "skipped":
+    if status in ("already_exists", "skipped"):
         return (
             f"\n📅 <b>{esc(date)}</b>\n"
             f"⏭ <b>SKIPPED</b> — {esc((s.get('error') or '')[:120])}\n"
@@ -150,8 +150,8 @@ def main():
 
     summaries = report.get("summaries", [])
     success = sum(1 for s in summaries if s.get("status") == "success")
-    failed = sum(1 for s in summaries if s.get("status") == "failed")
-    skipped = sum(1 for s in summaries if s.get("status") == "skipped")
+    failed = sum(1 for s in summaries if s.get("status") not in ("success", "already_exists", "skipped"))
+    skipped = sum(1 for s in summaries if s.get("status") in ("already_exists", "skipped"))
     dates = [s.get("date","") for s in summaries if s.get("date")]
     range_str = f"{dates[0]} ~ {dates[-1]}" if dates else "(no dates)"
 

@@ -41,6 +41,8 @@ def find_node_by_handle(env, handle):
 
 
 def main():
+    from release_gate import block_legacy_write
+    block_legacy_write()
     env = load_env()
     now = datetime.datetime.now(datetime.timezone.utc)
     results = []

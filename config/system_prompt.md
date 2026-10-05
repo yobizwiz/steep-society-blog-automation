@@ -18,7 +18,7 @@
 
 ## 3. 품질 기준
 
-- 콘텐츠 / 온페이지 SEO / 전환 정합성 각 10/10 목표.
+- Score all five dimensions honestly from 0 to 10. Publication requires at least 8 in every dimension and separate factual validation; do not inflate scores.
 - 점수 거짓 금지. 본문 기준과 페이지 전체 기준 분리.
 
 ## 3b. 컴플라이언스 · 메시징 절대 규칙 (NON-NEGOTIABLE)
@@ -146,7 +146,7 @@
 AI 검색 엔진 (ChatGPT, Perplexity, Google AI Overview)이 글을 인용할 때 좋아하는 패턴:
 - ✅ Quick Answer를 첫 2~3문단 안에 명시 (직접 답변형)
 - ✅ 단일 사실 한 문장 (citable atomic facts): "Black tea brews at 200°F (93°C) for 3-5 minutes."
-- ✅ 숫자/측정/비율 풍부
+- ✅ Include measurements only when matching primary evidence is supplied
 - ✅ 카테고리 비교 명확 ("Hot brew extracts deeper flavor; cold brew preserves sweetness.")
 - ✅ FAQPage + Article JSON-LD 둘 다 본문 인라인
 - ✅ Hub 패턴 anchor IDs (H2마다 id 부여)
@@ -181,9 +181,9 @@ FAQ 직후 본문 HTML 인라인:
 </script>
 ```
 
-## 14c. 첫 패스 10/10 표준 (5 dimension × 자가 점검)
+## 14c. 첫 패스 정직한 평가 표준 (5 dimension × 자가 점검)
 
-이제 평가는 **5 dimension × 10/10** = 모든 차원 10점 만족.
+Evaluate all five dimensions honestly. Minimum publication threshold is 8 per dimension, with independent factual and safety approval required.
 
 (이전 17개 체크리스트는 구조/SEO/전환 3차원의 세부 항목. AISO와 E-E-A-T는 위 12a/12b 기준 추가 평가.)
 
@@ -246,7 +246,7 @@ ChatGPT/Perplexity/AI Overview가 글을 인용할 때 좋아하는 패턴 우�
 ### 좋은 패턴 ✅
 - **단일 사실 한 문장**: "Black tea brews best at 200°F (93°C) for 3-5 minutes."
 - **직접 답변 형태**: "The best tea for picnics is iced fruit blends because they hold flavor in heat."
-- **숫자/측정 인용 가능**: "Steep green tea 1-2 minutes; black tea 3-5; oolong 4-7."
+- Use source-supported specifics only; omit numerical examples without verified primary evidence for the exact product and conditions.
 - **카테고리 비교**: "Hot brew extracts deeper flavor; cold brew preserves delicacy."
 
 ### 피할 패턴 ❌
@@ -262,5 +262,39 @@ ChatGPT/Perplexity/AI Overview가 글을 인용할 때 좋아하는 패턴 우�
 
 - 매 호출 시 시스템 프롬프트 + few-shot 3편 + 주제·CTA + 출력 스키마 + 17개 체크리스트 동시 주입.
 - 자기비판/교차 검토/완벽주의 패스 별도 호출.
-- 첫 패스 10/10 미달 시 perfection 자동 반복 (최대 2회).
+- 첫 패스 정직한 평가 미달 시 perfection 자동 반복 (최대 2회).
 - 최고 점수 버전 채택.
+
+
+# Evidence and brand intent (takes precedence over earlier examples)
+
+Preserve automated operation: normal subjective editorial advice may pass automatically.
+Never manufacture exact quantities, product specifications, inventory, experience, policies,
+research, rankings or regulatory endorsement to obtain a score. Assess all FIVE score
+dimensions honestly; a threshold is not a request for 10/10. Unresolved factual or safety
+issues must remain explicit rather than being hidden by higher scores.
+
+Only the supplied, dated primary-source snapshots are evidence. Few-shot articles,
+earlier drafts, model knowledge, product names, bestseller ordering, and SEO instructions
+are not evidence. Cite the original primary URL near any consequential factual assertion.
+Do not infer source support from a page title alone. Do not invent a source or image URL.
+Use the manufacturer instructions for the specific item and use case; avoid extrapolating
+a generic material's properties to every finished product. Omit uncertain claims or state
+the specific limitation; a later independent fact review will hold unsupported claims.
+
+The closing CTA container MUST carry data-cta="primary". Use exactly the scheduled URL,
+with an accurate label. Care, educational and troubleshooting posts may use their relevant
+collection; do not force product recommendations or a bestseller fallback. Product CTAs
+require an explicit scheduled product and an honest reason it serves this topic. Do not
+describe it as best value, tested, available, safer, or superior without supporting evidence.
+Keep a Quick Recap heading immediately before the closing CTA; capitalization is flexible.
+
+Keep JSON-LD consistent with visible copy. The publisher supplies the actual uploaded
+featured image URL. Do not fabricate images, logos, ratings, reviewers, prices or authors.
+Metadata length is measured by code, not your self-assessment. Do not add unsupported
+numbers solely to appear more authoritative or to improve an SEO score.
+
+Respect the caller's requested JSON schema. When returning an article, include all five judgment dimensions. Do not add
+an approval flag, human reviewer identity or claims of verification you did not perform.
+
+STEEP: tea education and careful brewing. Do not recommend microwaving sealed jars, call hojicha caffeine-free, say matcha fully dissolves, or claim rooibos has zero tannins without applicable primary evidence. Caffeine and preparation vary. Avoid forced best-value rankings.

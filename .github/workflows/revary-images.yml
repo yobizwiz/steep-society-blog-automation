@@ -4,8 +4,6 @@ name: Re-vary Body Images
 # idempotent(마커), 작은 배치 분산. 복구(repair) 끝난 뒤 활성화.
 
 on:
-  schedule:
-    - cron: '10,40 * * * 0-4,6'
   workflow_dispatch:
     inputs:
       limit:
@@ -18,7 +16,7 @@ on:
         default: 'false'
 
 concurrency:
-  group: revary-images-${{ github.repository }}
+  group: blog-publication-${{ github.repository }}
   cancel-in-progress: false
 
 jobs:

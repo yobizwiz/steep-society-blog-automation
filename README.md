@@ -1,3 +1,5 @@
+> 2026-10-03 review branch: [Publication gates, offline tests, statuses and limitations](docs/PUBLICATION_GATES.md) supersedes conflicting older instructions below. `--dry-run` is not offline.
+
 # Steep Society 블로그 자동화
 
 매일 1개 영어 블로그 글을 자동으로 생성·검증·게시하는 파이프라인.

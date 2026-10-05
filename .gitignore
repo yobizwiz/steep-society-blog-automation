@@ -13,3 +13,11 @@ output/*.html
 
 # Local
 *.bak
+
+# Local state and generated review artifacts
+__pycache__/
+*.pyc
+api-keys.txt
+.env
+output/
+logs/

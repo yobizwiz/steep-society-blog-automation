@@ -58,6 +58,8 @@ def _img_tag(url, alt):
 
 
 def refine_one(env, art, slots):
+    from release_gate import block_legacy_write
+    block_legacy_write()
     aid = art["id"]
     title = art.get("title", "")
     body = art.get("body_html", "")
@@ -100,6 +102,8 @@ def refine_one(env, art, slots):
 
 
 def main():
+    from release_gate import block_legacy_write
+    block_legacy_write()
     env = load_env()
     blog_id = get_blog_id(env)
     arts = fetch_all(env, blog_id)

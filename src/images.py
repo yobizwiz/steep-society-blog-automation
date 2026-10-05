@@ -113,7 +113,7 @@ def optimize_to_webp(png_bytes, *, max_dim=MAX_DIM, quality=WEBP_QUALITY):
         from PIL import Image
     except ImportError:
         log("Pillow 없음", "WARN")
-        return png_bytes
+        raise RuntimeError("Pillow required for genuine WebP encoding")
     img = Image.open(io.BytesIO(png_bytes))
     if img.mode not in ("RGB", "RGBA"):
         img = img.convert("RGB")
@@ -162,20 +162,20 @@ def verify_image_matches_prompt(image_bytes, prompt, *, anthropic_key,
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read())
     except Exception as e:
-        log(f"  비전 검증 실패 (네트워크): {e} — 통과 처리", "WARN")
-        return True, "verify_failed_pass"
+        log(f"  비전 검증 실패 (네트워크): {e} — 검토 필요", "WARN")
+        return False, "vision_service_unavailable"
 
     text = "".join(p.get("text", "") for p in data.get("content", []) if p.get("type") == "text")
     # Extract JSON
     m = re.search(r"\{[^{}]*\"match\"[^{}]*\}", text)
     if not m:
-        log(f"  비전 응답 파싱 실패: {text[:100]} — 통과 처리", "WARN")
-        return True, "parse_failed_pass"
+        log(f"  비전 응답 파싱 실패: {text[:100]} — 검토 필요", "WARN")
+        return False, "invalid_vision_response"
     try:
         result = json.loads(m.group(0))
-        return bool(result.get("match", True)), str(result.get("reason", ""))[:200]
+        return (result.get("match") is True), str(result.get("reason", ""))[:200]
     except Exception:
-        return True, "parse_failed_pass"
+        return False, "invalid_vision_response"
 
 
 def _fallback_prompt(filename_base):
@@ -314,6 +314,10 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
                               variants=1, aspect_ratio="16:9",
                               anthropic_key=None, max_vision_retries=2):
     """이미지 생성 + 프롬프트 정화 + 비전 검증 + 불일치 시 자동 재생성."""
+    if not anthropic_key:
+        raise RuntimeError("Image verification key is required")
+    if max_vision_retries < 0:
+        raise ValueError("max_vision_retries must be nonnegative")
     clean_name = _clean_filename(filename_base)
     log(f"  이미지 생성 ({variants}장): {clean_name}")
 
@@ -325,25 +329,15 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
     last_png = None
     pngs = []
 
-    # Model routing: honor caller's Gemini model choice (featured=Pro, body=Flash).
-    # Unknown/legacy (Imagen) values fall back to Nano Banana 2.
-    effective_model = model if str(model or "").startswith("gemini") else "gemini-3.1-flash-image-preview"
-    fallback_model = "gemini-3.1-flash-image-preview"
+    # Honor the explicitly configured model without silent fallback.
+    effective_model = model
 
     def _try_generate(p):
-        nonlocal effective_model
-        try:
+        if str(effective_model).startswith('gemini'):
             return generate_gemini_image(p, api_key=api_key, model=effective_model,
-                                          n=variants, aspect_ratio=aspect_ratio)
-        except ImagenSafetyBlocked:
-            raise
-        except Exception as e:
-            if effective_model != fallback_model:
-                log(f"  {effective_model} 실패({str(e)[:80]}) — {fallback_model} 폴백", "WARN")
-                effective_model = fallback_model
-                return generate_gemini_image(p, api_key=api_key, model=effective_model,
-                                              n=variants, aspect_ratio=aspect_ratio)
-            raise
+                                         n=variants, aspect_ratio=aspect_ratio)
+        return generate_imagen(p, api_key=api_key, model=effective_model,
+                               n=variants, aspect_ratio=aspect_ratio)
 
     for vision_try in range(max_vision_retries + 1):
         try:
@@ -365,11 +359,6 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
         last_webp = webp
         last_png = best
 
-        if not anthropic_key:
-            # 비전 키 없으면 검증 스킵
-            log(f"  최적화 완료: {len(best):,}B → {len(webp):,}B ({len(webp)/len(best)*100:.0f}%)")
-            break
-
         # 비전 검증
         log(f"  비전 검증 시도 {vision_try+1}/{max_vision_retries+1}")
         matches, reason = verify_image_matches_prompt(
@@ -381,7 +370,7 @@ def generate_image_for_slot(*, prompt, filename_base, api_key, model,
         log(f"  ❌ 비전 검증 실패: {reason} — 재생성", "WARN")
         safe_prompt = safe_prompt + " Strictly avoid this reported flaw: " + reason[:120] + "."
         if vision_try == max_vision_retries:
-            log(f"  비전 재시도 한도 도달 — 마지막 이미지 사용", "WARN")
+            raise RuntimeError("Image verification retries exhausted: " + reason)
 
     return {"webp_bytes": last_webp, "filename": f"{clean_name}.webp",
-            "variants_count": len(pngs)}
+            "variants_count": len(pngs), "vision_verified": True}

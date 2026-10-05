@@ -17,6 +17,8 @@ FLAV = """<p><strong>Find Your Flavor</strong><br>Tea is a world of taste and sc
 TARGETS = {"brewing-style-experience": BREW, "flavor-aroma": FLAV}
 
 def main():
+    from release_gate import block_legacy_write
+    block_legacy_write()
     env = load_env()
     scopes = [s["handle"] for s in _gql(env, "{ currentAppInstallation { accessScopes { handle } } }")["currentAppInstallation"]["accessScopes"]]
     print("token scopes:", scopes)
