@@ -11,9 +11,9 @@ tea_gift_sets_samplers:
   url: "https://steep-society.com/collections/tea-gift-sets-samplers"
 
 tea_samplers_variety_packs:
-  handle: tea-samplers-variety-packs
-  title: "Tea Samplers & Variety Packs"
-  url: "https://steep-society.com/collections/tea-samplers-variety-packs"
+  handle: tea-gift-sets-samplers
+  title: "Tea Gift Sets & Samplers"
+  url: "https://steep-society.com/collections/tea-gift-sets-samplers"
 
 tea_storage_canisters:
   handle: tea-storage-canisters
@@ -161,13 +161,13 @@ seasonal_limited:
   title: "Seasonal & Limited Edition"
   url: "https://steep-society.com/collections/seasonal-limited-edition-tea"
 brewing_styles:
-  handle: brewing-styles-experience
-  title: "Brewing Styles & Experience"
-  url: "https://steep-society.com/collections/brewing-styles-experience"
+  handle: brewing-style-experience
+  title: "Brewing Style & Experience"
+  url: "https://steep-society.com/collections/brewing-style-experience"
 flavor_aroma:
-  handle: flavor-aroma-profiles
+  handle: flavor-aroma
   title: "Flavor & Aroma Profiles"
-  url: "https://steep-society.com/collections/flavor-aroma-profiles"
+  url: "https://steep-society.com/collections/flavor-aroma"
 instant_on_the_go:
   handle: instant-and-on-the-go-teas
   title: "Instant & On-the-Go Teas"
