@@ -97,14 +97,39 @@ def get_product_title(gql, handle):
         return None
 
 
+# 2026-10-21 (Claude): display names stop at marketing fragments ("Tastes Great Hot", "Can Help Support ...")
+# and borrow the next title segment when the first is only a brand ("Yogi Tea" -> "Yogi Tea Egyptian Licorice Tea").
+_MARKETING = {"tastes", "taste", "great", "perfect", "ideal", "premium", "best", "delicious", "naturally",
+              "healthy", "support", "supports", "helps", "help", "made", "with", "for", "pack", "packs",
+              "count", "ct", "oz", "ounce", "ounces", "lb", "lbs", "includes", "including", "featuring",
+              "can", "may", "great-tasting", "high-quality", "new", "upgraded"}
+
+
 def short_name(title, handle):
     t = (title or "").strip()
     if not t:
         t = handle.replace("-", " ").strip().title()
-    t = re.split(r"\s[-–—|:]\s|[,(\[]", t)[0].strip()
-    words = t.split()
-    out = " ".join(words[:7])
-    return out[:70].strip()
+    segs = [s.strip() for s in re.split(r"\s[-–—|:]\s|[,(\[]", t) if s.strip()]
+    words = []
+    for s in segs:
+        words.extend(s.split())
+        if len(words) >= 3:
+            break
+    out = []
+    for i, w in enumerate(words):
+        if i >= 3 and w.lower().strip(".,;:!®™") in _MARKETING:
+            break
+        out.append(w)
+        if len(out) >= 7:
+            break
+    name = " ".join(out).strip(" -–—|:,&")
+    return (name[:70].strip() or t[:70].strip())
+
+
+def product_facts(title, limit=180):
+    """Full product title as the only allowed source of product attributes (flavor, size, material, use)."""
+    t = re.sub(r"\s+", " ", (title or "")).strip()
+    return t if len(t) <= limit else t[:limit].rsplit(" ", 1)[0] + " ..."
 
 
 def inject_into_closing_box(body_html, url, name):
@@ -128,11 +153,13 @@ def ensure_product_cta(gql, entry, cols, body_html, domain, log=print):
         handle = entry.get("cta_product")
         title = None
         if not handle:
-            pick = pick_product_by_keywords(gql, entry.get("title"))
+            # 2026-10-21 (Claude): the post's own CTA collection first (topic-aligned best seller);
+            # title-keyword search only when that collection has no qualifying product.
+            ckey = entry.get("cta_collection")
+            chandle = ((cols.get(ckey) or {}).get("handle")) if ckey else None
+            pick = pick_product_from_collection(gql, chandle)
             if not pick:
-                ckey = entry.get("cta_collection")
-                chandle = ((cols.get(ckey) or {}).get("handle")) if ckey else None
-                pick = pick_product_from_collection(gql, chandle)
+                pick = pick_product_by_keywords(gql, entry.get("title"))
             if pick:
                 handle, title = pick["handle"], pick["title"]
         if not entry.get("cta_product") and "/products/" in body_html:
@@ -216,9 +243,18 @@ def _qualify_nodes(nodes, out, seen, n):
 
 
 def top_products_for_entry(gql, entry, cols, n=4):
-    """Real in-stock products for this topic: keyword search first, then CTA collection."""
+    """Real in-stock products for this topic: CTA collection first (2026-10-21), then keyword search."""
     out, seen = [], set()
     try:
+        ckey = entry.get("cta_collection")
+        chandle = ((cols.get(ckey) or {}).get("handle")) if ckey else None
+        if chandle:
+            try:
+                data = gql(_PICK_Q, {"h": chandle})
+                nodes = (((data.get("collectionByHandle") or {}).get("products") or {}).get("nodes")) or []
+            except Exception:
+                nodes = []
+            _qualify_nodes(nodes, out, seen, max(1, n // 2))
         words = [w for w in re.findall(r"[A-Za-z]+", (entry.get("title") or "").lower())
                  if w not in _STOP]
         queries = []
@@ -267,12 +303,16 @@ def build_store_context(env, entry, cols, domain, blog_handle):
     if prods:
         lines = "\n".join(
             "  - " + short_name(p["title"], p["handle"]) + " ($" + ("%.2f" % p["price"]) +
-            ") -> " + domain.rstrip("/") + "/products/" + p["handle"]
+            ") -> " + domain.rstrip("/") + "/products/" + p["handle"] +
+            "\n      FACTS (full product title): " + product_facts(p["title"])
             for p in prods)
         parts.append(
             "REAL IN-STOCK PRODUCTS from our store relevant to this topic "
             "(mention 1-3 naturally where they genuinely help the reader, link at most one "
-            "inline in the body; NEVER invent other product names, brands, or prices):\n" + lines)
+            "inline in the body; NEVER invent other product names, brands, or prices). "
+            "Describe a product ONLY with what its FACTS line states (flavor, size, material, use); "
+            "never guess what a brand or product name means, and skip a product whose facts do not fit the topic. "
+            "Refer to it by the short name, never paste the full FACTS title:\n" + lines)
     links = None
     arts = _match_articles(entry.get("title"), _recent_articles(env), k=3)
     if arts:
